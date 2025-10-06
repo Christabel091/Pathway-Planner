@@ -1,0 +1,39 @@
+body{
+    background: rgb(236, 219, 196);
+    fill-opacity: unset;
+}
+
+.outer-container{
+    align-content: center;
+    border-color: black;
+    justify-content: center;   
+    align-items: center;      
+    height: 90vh;           
+    width: 90vw;   
+    padding:100px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.box{
+    border-color: rgba(180, 177, 177, 0.793);
+    align-items: center;
+    border: 2px solid black;
+    border-radius: 50px;
+    padding:20px;
+    background-color:rgb(255, 255, 255);
+    color:rgb(35, 34, 34);
+    box-shadow: black;
+}
+
+.mb-3{
+    border-radius: 120px;
+}
+
+.submit{
+    border-radius: 100px;
+    align-items: center;
+    padding: 10px;
+    border:80px;
+    background-color: antiquewhite;
+
+}
