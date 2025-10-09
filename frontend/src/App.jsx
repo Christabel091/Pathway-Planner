@@ -1,4 +1,4 @@
-import "../src/styles/App.css";
+import Intro from "./pages/intro"; 
 import Welcome from "./pages/Welcome";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -21,6 +21,10 @@ function AppRoutes() {
   return (
     <>
       <Routes>
+        <Route
+          path="/"
+          element={!user ? <Intro /> : <Navigate to="/" />}
+        />
         <Route
           path="/Welcome"
           element={!user ? <Welcome /> : <Navigate to="/" />}

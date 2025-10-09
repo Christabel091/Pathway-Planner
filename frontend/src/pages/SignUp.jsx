@@ -1,3 +1,5 @@
+import '../styles/SignUp.css';
+
 /** @format */
 
 import { useNavigate } from "react-router-dom";
@@ -49,15 +51,22 @@ const SignUp = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="category"
-          >
-            <option value="">select role</option>
-            <option value="student">student</option>
-            <option value="staff">staff</option>
-          </select>
+          <div className="select-wrap">
+            <select
+              className="category"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              required
+              aria-label="Select role"
+            >
+              <option value="" disabled hidden>
+                Select role
+              </option>
+              <option value="patient">Patient</option>
+              <option value="student">Physician</option>
+              <option value="staff">Caretaker</option>
+            </select>
+          </div>
           <p className="error-message">{error}</p>
           <button type="sign up" className="btn-auth">
             Create account
