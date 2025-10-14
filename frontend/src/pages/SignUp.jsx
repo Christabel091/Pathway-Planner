@@ -55,8 +55,10 @@ const SignUp = () => {
             className="category"
           >
             <option value="">select role</option>
-            <option value="student">student</option>
-            <option value="staff">staff</option>
+            <option value="patient">patient</option>
+            <option value="physician">physician</option>
+            <option value="caretaker">caretaker</option>
+            <option value="admin">admin</option>
           </select>
           <p className="error-message">{error}</p>
           <button type="sign up" className="btn-auth">
