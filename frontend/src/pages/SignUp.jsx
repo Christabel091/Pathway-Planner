@@ -14,7 +14,7 @@ const SignUp = () => {
   const handleSignUp = async (e) => {
     e.preventDefault();
     const response = await signUp(username, email, password, role);
-    if (response.user) navigate("/");
+    if (response.token) navigate("/Info");
     else {
       setError(response.error);
     }

@@ -11,7 +11,8 @@ model User {
   id            Int           @id @default(autoincrement())
   email         String        @unique(map: "email") @db.VarChar(150)
   UserName      String        @db.VarChar(150)
-  password_hash String         @db.VarChar(250)
+  password_hash String  @db.VarChar(72)
+   profileCompleted Boolean  @default(false)
   role          Role
   created_at    DateTime?     @default(now()) @db.DateTime(0)
   updated_at    DateTime?     @default(now()) @updatedAt @db.DateTime(0)
