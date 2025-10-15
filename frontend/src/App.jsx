@@ -2,7 +2,7 @@
 import Welcome from "./pages/Welcome";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
-//import Info from "./pages/Info";
+import Info from "./pages/Info";
 import Home from "./pages/Home";
 //import InfoIntro from "./pages/InfoIntro";
 //import InfoPatient from "./pages/InfoPatient";
@@ -18,35 +18,9 @@ import {
 } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./components/AuthContext";
- 
-function RequireAuth() {
-  const { isAuthed, loading } = useAuth();
-  if (loading) return null; // or a spinner
-  return isAuthed ? <Outlet /> : <Navigate to="/Welcome" replace />;
-}
-
-function RequireProfileComplete() {
-  const { profileCompleted, loading } = useAuth();
-  if (loading) return null;
-  return profileCompleted ? <Outlet /> : <Navigate to="/Info" replace />;
-}
-
-function BlockIfProfileComplete() {
-  const { profileCompleted, loading } = useAuth();
-  if (loading) return null;
-  return profileCompleted ? <Navigate to="/" replace /> : <Outlet />;
-}
-
-// For public pages: if authed, send them either to Info (if incomplete) or Home.
-function PublicRedirect() {
-  const { isAuthed, profileCompleted, loading } = useAuth();
-  if (loading) return null;
-  if (!isAuthed) return <Outlet />;
-  return profileCompleted ? (
-    <Navigate to="/" replace />
-  ) : (
-    <Navigate to="/Info" replace />
-  );
+function ProtectedRoute() {
+  const { user } = useAuth();
+  return user ? <Outlet /> : <Navigate to="/Welcome" />;
 }
 
 function AppRoutes() {

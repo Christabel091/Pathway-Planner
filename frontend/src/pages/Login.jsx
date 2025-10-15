@@ -13,7 +13,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     const response = await login(email, password);
-    if (response.user) navigate("/");
+    if (response.token) navigate("/");
     else setError(response.error);
   };
 

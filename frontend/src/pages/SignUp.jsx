@@ -16,8 +16,10 @@ const SignUp = () => {
   const handleSignUp = async (e) => {
     e.preventDefault();
     const response = await signUp(username, email, password, role);
-    if (response.user) navigate("/");
+    if (response.token) navigate("/Info");
     else {
+      console.log(response.error);
+      console.log("Error during sign up:");
       setError(response.error);
     }
   };
@@ -51,22 +53,7 @@ const SignUp = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <div className="select-wrap">
-            <select
-              className="category"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-              aria-label="Select role"
-            >
-              <option value="" disabled hidden>
-                Select role
-              </option>
-              <option value="patient">Patient</option>
-              <option value="student">Physician</option>
-              <option value="staff">Caretaker</option>
-            </select>
-          </div>
+          
           <p className="error-message">{error}</p>
           <button type="sign up" className="btn-auth">
             Create account
