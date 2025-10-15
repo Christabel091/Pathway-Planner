@@ -50,9 +50,10 @@ export const AuthProvider = ({ children }) => {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Login failed");
+    if (!res.ok) {
+      return { error: data?.error || "Login failed" };
+    }
 
-    // Expecting { token, user }
     if (data.token && data.user) {
       setToken(data.token);
       setUser(data.user);
@@ -72,9 +73,10 @@ export const AuthProvider = ({ children }) => {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Signup failed");
+    if (!res.ok) {
+      return { error: data?.error || "Signup failed" };
+    }
 
-    // Expecting { token, user } with user.profileCompleted === false initially
     if (data.token && data.user) {
       setToken(data.token);
       setUser(data.user);
