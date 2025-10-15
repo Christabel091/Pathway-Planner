@@ -16,6 +16,8 @@ const SignUp = () => {
     const response = await signUp(username, email, password, role);
     if (response.token) navigate("/Info");
     else {
+      console.log(response.error);
+      console.log("Error during sign up:");
       setError(response.error);
     }
   };
