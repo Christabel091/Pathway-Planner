@@ -28,9 +28,6 @@ const Welcome = () => {
 
       <footer className="">
         <p>
-          <b> </b>
-          <b> </b>
-          
           Pathway-planner © {new Date().getFullYear()} | All rights reserved.
         </p>
       </footer>

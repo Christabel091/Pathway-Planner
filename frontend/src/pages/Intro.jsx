@@ -61,7 +61,7 @@ export default function Intro() {
       aria-label="Welcome screen. Tap or swipe to continue."
     >
       <main className="intro-card" aria-labelledby="app-title">
-        <p className="eyebrow">Welcome to</p>
+        <p className="eyebrow delayed-intro">Welcome to</p>
         <h1 id="app-title" className="intro-title">Pathway Planner</h1>
         <p className="intro-tag">Gentle goals, lasting care</p>
 
