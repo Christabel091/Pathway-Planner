@@ -6,16 +6,18 @@
   
   .page {
     min-height: 100vh;
-    padding: 6rem 1.5rem 3rem; /* top padding leaves room under navbar */
+    padding: 6rem 0.3rem 3rem; /* top padding leaves room under navbar */
     color: var(--text);
-    display: grid;
-    place-items: center;
+    display: block;
     text-align: center;
   }
   
   .page h1 {
-    margin-bottom: 0.50rem;
-    letter-spacing: 0.4px;
+    margin-top: 0.2rem;    
+    margin-bottom: 3.9rem;  
+    padding: 0;            
+    font-size: 2rem;        
+    text-align: center;    
   }
   
   .page p {
@@ -24,12 +26,12 @@
   }
   
   .cardish {
-    background: #f6dfdb;
-    opacity: 0.6;
-    border-radius: 16px;
-    padding: 1.25rem 1.5rem;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.06);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border-radius: 50px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
   
   .feature-list {
@@ -44,3 +46,39 @@
     margin: 0.5rem 0;
   }
 
+  .services-container {
+    display: flex;
+    justify-content: space-between; /* spread cards so they fit one row when wide */
+    align-items: stretch;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.1rem;;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .service-card {
+    flex: 0 0 240px;
+    max-width: 240px;
+    background: rgba(252, 255, 255, 0.1);
+    backdrop-filter: blur(30px);
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    padding: 0.8rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+    min-height: 160px;
+    font-size: small;
+  }
+  
+  .service-card:hover {
+    transform: translateY(-5px);
+  }
+
+@media (min-width: 1100px) {
+  .services-container {
+    flex-wrap: nowrap; /* keep all cards on one line when there's room */
+  }
+}

@@ -5,12 +5,24 @@ export default function Services() {
   return (
     <section className="page">
       <h1>Services</h1>
-      <ul className="feature-list">
-        <li><strong>Create goals:</strong> patients/caregivers define care goals.</li>
-        <li><strong>Edit goals:</strong> update details as needs change.</li>
-        <li><strong>Submit for approval:</strong> doctors approve goals.</li>
-        <li><strong>Track progress:</strong> caregivers observe and log progress.</li>
-      </ul>
+      <div className="services-container">
+        <div className="service-card">
+          <h2>🎯 Create Goals</h2>
+          <p>Patients and caregivers define care goals.</p>
+        </div>
+        <div className="service-card">
+          <h2> 🔧 Edit Goals</h2>
+          <p>Update details as needs change.</p>
+        </div>
+        <div className="service-card">
+          <h2> 📤 Submit for Approval</h2>
+          <p>Doctors approve goals.</p>
+        </div>
+        <div className="service-card">
+          <h2> 📊 Track Progress</h2>
+          <p>Caregivers observe and log progress.</p>
+        </div>
+      </div>
     </section>
   );
 }
