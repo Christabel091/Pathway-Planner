@@ -1,7 +1,7 @@
 /** @format */
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import "../styles/Intro.css";
+import "../styles/intro.css";
 
 export default function Intro() {
   const navigate = useNavigate();

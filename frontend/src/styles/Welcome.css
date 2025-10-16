@@ -8,6 +8,7 @@ body {
   align-items: flex-start;
   padding-top: 100px;
   color: #3c2f2f;
+  margin-top: 120%;
 }
 
 /* Centered container */
@@ -23,7 +24,8 @@ body {
   transition: transform 0.9s ease;
   opacity: 0;
   transform: translateX(40px);
-  animation: pageIn 1200ms ease forwards;
+  animation: pageIn 1.5s ease forwards;
+  margin-top: 120px;
 }
 
 .welcome-container:hover {
@@ -37,7 +39,7 @@ body {
   margin-bottom: 24px;
   font-weight: 600;
   transform: translateX(20px);
-  animation: itemSlide 1300ms ease forwards;
+  animation: itemSlide 1.2s ease forwards;
   animation-delay: 180ms;
 }
 /* Motto text */
@@ -48,7 +50,7 @@ body {
     margin-top: -10px;
     margin-bottom: 25px;
     transform: translateX(20px);
-    animation: itemSlide 1300ms ease forwards;
+    animation: itemSlide 1.2s ease forwards;
     animation-delay: 100ms;
   }
 
