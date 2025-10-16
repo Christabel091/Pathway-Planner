@@ -1,3 +1,5 @@
+import '../styles/SignUp.css';
+
 /** @format */
 
 import { useNavigate } from "react-router-dom";
@@ -51,17 +53,7 @@ const SignUp = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="category"
-          >
-            <option value="">select role</option>
-            <option value="patient">patient</option>
-            <option value="physician">physician</option>
-            <option value="caretaker">caretaker</option>
-            <option value="admin">admin</option>
-          </select>
+          
           <p className="error-message">{error}</p>
           <button type="sign up" className="btn-auth">
             Create account

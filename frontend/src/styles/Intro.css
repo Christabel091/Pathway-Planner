@@ -1,0 +1,109 @@
+html, body, #root {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .intro-screen {
+    background-attachment: fixed;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.45s ease, opacity 0.7s ease;
+    color: #b08678;
+    animation: fadeIn 2s ease forwards;
+    padding-top: 100px;
+  }
+  
+  .intro-screen.leaving {
+    transform: translateX(-50px); /* smooth horizontal slide */
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Grand, cinematic text */
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 1.4rem;
+    margin-top: 10px;
+    margin-bottom: 55px;
+    opacity: 0.9;
+  }
+  
+  .intro-title {
+    font-size: clamp(3rem, 6vw, 6rem);
+    font-weight: 700;
+    margin: 0.8em 0;
+    letter-spacing: 0.05em;
+    animation-delay:2s ;
+  }
+  
+  .intro-tag {
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+    font-family:italic;
+    margin-bottom: 50px;
+    opacity: 0.85;
+  }
+  
+  .arrow-next {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: #d8a48f;
+    font-size: 2rem;
+    cursor: pointer;
+    opacity: 0;
+    animation: arrowFade 1.2s ease forwards;
+    animation-delay: 2s;
+  }
+  
+  @keyframes arrowFade {
+    to { opacity: 1; }
+  }
+  
+  /* Make the arrow move slowly and elegantly */
+  .arrow {
+    display: inline-block;
+    animation: nudge 2.8s ease-in-out infinite;
+  }
+  
+  @keyframes nudge {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* Fade-in animation */
+@keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Welcome to (appears immediately) */
+  .delayed-intro {
+    opacity: 0;
+    animation: fadeInUp 1s ease forwards;
+    animation-delay: 0s; /* appears right away */
+  }
+  
+  /* Pathway Planner (appears 1 second later) */
+  .intro-title,
+  .intro-tag {
+    opacity: 0;
+    animation: fadeInUp 1.2s ease forwards;
+    animation-delay: 1s; /* waits 1s before starting */
+  }
+  
