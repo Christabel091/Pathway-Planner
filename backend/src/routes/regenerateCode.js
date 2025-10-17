@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import generateInviteCode from "../../utils/generateCode";
+import generateInviteCode from "../../utils/generateCode.js";
 dotenv.config();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
