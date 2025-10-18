@@ -5,12 +5,14 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- USERS
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(150) NOT NULL UNIQUE,
+  email VARCHAR(150) NOT NULL,
   UserName VARCHAR(150) NOT NULL,
-  password_hash VARCHAR(250) NOT NULL,
+  password_hash VARCHAR(72) NOT NULL,
+  profileCompleted BOOLEAN NOT NULL DEFAULT FALSE,
   role ENUM ('patient','physician','caretaker','admin') NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `email` (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- CLINICIANS
@@ -24,13 +26,16 @@ CREATE TABLE IF NOT EXISTS clinicians (
   contact_email VARCHAR(150),
   contact_phone VARCHAR(20),
   office_address VARCHAR(255),
+  inviteCode VARCHAR(191) NOT NULL,
+  inviteUpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_clinicians_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY uq_clinicians_user (user_id)
+  UNIQUE KEY uq_clinicians_user (user_id),
+  UNIQUE KEY uq_clinicians_inviteCode (inviteCode)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- PATIENTS (now requires exactly one clinician)
+-- PATIENTS (requires exactly one clinician)
 CREATE TABLE IF NOT EXISTS patients (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -80,11 +85,12 @@ CREATE TABLE IF NOT EXISTS patient_caretakers (
   patient_id   INT NOT NULL,
   caretaker_id INT NOT NULL,
   role_note    VARCHAR(120),
-  permissions  SET('view_goals','view_journal','add_checkins'),
+  permissions  TEXT NULL,               -- free-form String? (no SET)
   created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (patient_id, caretaker_id),
-  CONSTRAINT fk_pc_patient   FOREIGN KEY (patient_id)   REFERENCES patients(id)   ON DELETE CASCADE,
-  CONSTRAINT fk_pc_caretaker FOREIGN KEY (caretaker_id) REFERENCES caretakers(id) ON DELETE CASCADE
+  CONSTRAINT fk_pc_patient     FOREIGN KEY (patient_id)   REFERENCES patients(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_pc_caretaker   FOREIGN KEY (caretaker_id) REFERENCES caretakers(id) ON DELETE CASCADE,
+  INDEX idx_pc_caretaker (caretaker_id) -- secondary index to match Prisma @@index
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- GOALS
@@ -110,9 +116,10 @@ CREATE TABLE IF NOT EXISTS goal_version (
   version_number INT NOT NULL,
   target_per_week INT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_gv_goal FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE,
-  CONSTRAINT fk_gv_user FOREIGN KEY (proposed_by_id) REFERENCES users(id) ON DELETE SET NULL,
-  UNIQUE KEY uq_gv_goal_version (goal_id, version_number)
+  CONSTRAINT fk_gv_goal      FOREIGN KEY (goal_id)        REFERENCES goals(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_gv_user_fk   FOREIGN KEY (proposed_by_id) REFERENCES users(id)  ON DELETE SET NULL,
+  UNIQUE KEY uq_gv_goal_version (goal_id, version_number),
+  INDEX fk_gv_user (proposed_by_id) -- Prisma @@index map name
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- JOURNAL
@@ -128,7 +135,8 @@ CREATE TABLE IF NOT EXISTS journal_entries (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_journal_patient FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
   CONSTRAINT fk_journal_goal    FOREIGN KEY (goal_id)    REFERENCES goals(id)     ON DELETE SET NULL,
-  INDEX idx_journal_patient_created (patient_id, created_at)
+  INDEX idx_journal_patient_created (patient_id, created_at),
+  INDEX idx_journal_goal (goal_id) -- Prisma @@index map name
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- APPROVAL (standalone)
@@ -194,7 +202,8 @@ CREATE TABLE IF NOT EXISTS medicine (
   patient_daily_id INT NULL,
   CONSTRAINT fk_medicine_patient FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
   CONSTRAINT fk_medicine_daily   FOREIGN KEY (patient_daily_id) REFERENCES patient_daily_metrics(id) ON DELETE SET NULL,
-  INDEX idx_medicine_daily (patient_daily_id)
+  INDEX idx_medicine_daily (patient_daily_id),
+  INDEX fk_medicine_patient (patient_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- SYMPTOM LOG (linked to day)
@@ -236,8 +245,10 @@ CREATE TABLE IF NOT EXISTS ai_suggestion (
   confidence DECIMAL(5,2),
   requires_approval BOOLEAN DEFAULT FALSE,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_ai_patient FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-  CONSTRAINT fk_ai_goal    FOREIGN KEY (goal_id)    REFERENCES goals(id)    ON DELETE SET NULL
+  CONSTRAINT fk_ai_patient_fk FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ai_goal_fk    FOREIGN KEY (goal_id)    REFERENCES goals(id)    ON DELETE SET NULL,
+  INDEX fk_ai_patient (patient_id), -- Prisma @@index map name
+  INDEX fk_ai_goal (goal_id)        -- Prisma @@index map name
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- AUDIT LOG
