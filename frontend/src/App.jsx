@@ -1,13 +1,13 @@
 import Welcome from "./pages/Welcome";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
-import Info from "./pages/Info";
 import Home from "./pages/Home";
 import Navbar from "./pages/navbar";
 import Intro from "./pages/intro"; // keep path/case matching your file
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
+import PatientOnboarding from "./pages/PatientOnboarding";
 
 import {
   BrowserRouter as Router,
@@ -29,7 +29,7 @@ function RequireAuth() {
 function RequireProfileComplete() {
   const { profileCompleted, loading } = useAuth();
   if (loading) return null;
-  return profileCompleted ? <Outlet /> : <Navigate to="/Info" replace />;
+  return profileCompleted ? <Outlet /> : <Navigate to="/onboarding/patient" replace />;
 }
 
 function BlockIfProfileComplete() {
@@ -46,7 +46,7 @@ function PublicRedirect() {
   return profileCompleted ? (
     <Navigate to="/home" replace />
   ) : (
-    <Navigate to="/Info" replace />
+    <Navigate to="/onboarding/patient" replace />
   );
 }
 
@@ -64,10 +64,10 @@ function AppRoutes() {
         <Route path="/Contact" element={<Contact />} />
       </Route>
 
-      {/* Auth required but profile not complete: allow Info wizard */}
+      {/* Auth required but profile not complete: allow onboarding pages */}
       <Route element={<RequireAuth />}> 
         <Route element={<BlockIfProfileComplete />}>
-          <Route path="/Info" element={<Info />} />
+          <Route path="/onboarding/patient" element={<PatientOnboarding />} />
         </Route>
       </Route>
 

@@ -1,4 +1,5 @@
 import "../styles/SignUp.css";
+import "../pages/PatientOnboarding";
 /** @format */
 
 import { useNavigate } from "react-router-dom";
@@ -15,8 +16,16 @@ const SignUp = () => {
   const handleSignUp = async (e) => {
     e.preventDefault();
     const response = await signUp(username, email, password, role);
-    if (response.token) navigate("/Info");
-    else {
+
+    if (response.token) {
+      // decide onboarding path based on selected role
+      const r = (role || "").toLowerCase();
+      if (r === "patient") navigate("/onboarding/patient");
+      else if (r === "physician" || r === "clinician") navigate("/onboarding/clinician");
+      else if (r === "caretaker") navigate("/onboarding/caretaker");
+      else if (r === "admin") navigate("/onboarding/admin");
+      else navigate("/onboarding/patient"); // safe default
+    } else {
       setError(response.error);
     }
   };
@@ -54,6 +63,7 @@ const SignUp = () => {
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="category"
+            required
           >
             <option value="">select role</option>
             <option value="patient">patient</option>
@@ -62,11 +72,11 @@ const SignUp = () => {
             <option value="admin">admin</option>
           </select>
           <p className="error-message">{error}</p>
-          <button type="sign up" className="btn-auth">
+          <button type="submit" className="btn-auth">
             Create account
           </button>
           <p className="link-text">
-            Already have an account? <a href="/login">Log in</a>
+            Already have an account? <a href="/Login">Log in</a>
           </p>
         </form>
       </div>
