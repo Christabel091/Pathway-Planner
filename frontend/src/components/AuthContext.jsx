@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }) => {
     if (data.token && data.user) {
       setToken(data.token);
       setUser(data.user);
+      console.log("Login successful, user:", data.user);
       return data;
     } else {
       throw new Error("Invalid login response");
@@ -100,6 +101,7 @@ export const AuthProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       user,
+      setUser,
       isAuthed,
       profileCompleted,
       login,
@@ -107,7 +109,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       loading,
     }),
-    [user, isAuthed, profileCompleted, login, signUp, logout, loading]
+    [user, setUser, isAuthed, profileCompleted, login, signUp, logout, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
