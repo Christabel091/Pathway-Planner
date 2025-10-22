@@ -1,0 +1,162 @@
+/* src/styles/modal.css */
+
+/* ——— Theme Tokens (soft, warm, minimalist) ——— */
+:root {
+  --pp-bg: rgba(0, 0, 0, 0.28);
+  --pp-card: #fffaf6;
+  --pp-text: #2d221d;
+  --pp-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  --pp-radius: 1.25rem; /* ~ rounded-2xl */
+  --pp-pad: 1.25rem;
+  --pp-font: "Georgia", "Times New Roman", serif;
+
+  /* Accents for statuses */
+  --pp-err: #b3261e;
+  --pp-err-soft: #ffe9e7;
+  --pp-ok: #1f7a43;
+  --pp-ok-soft: #e9fff3;
+  --pp-info: #1e4fb3;
+  --pp-info-soft: #e8f0ff;
+
+  /* Anim */
+  --pp-anim-in: 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  --pp-anim-out: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Overlay */
+.pp-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--pp-bg);
+  display: grid;
+  place-items: start center; /* toast-like at top */
+  padding: 24px;
+  z-index: 1000;
+  animation: overlayIn var(--pp-anim-in) forwards;
+}
+
+.pp-modal__overlay--hide {
+  animation: overlayOut var(--pp-anim-out) forwards;
+}
+
+/* Card */
+.pp-modal {
+  width: min(720px, calc(100vw - 32px));
+  font-family: var(--pp-font);
+  color: var(--pp-text);
+  background: linear-gradient(180deg, #fffaf6 0%, #fff6ef 100%);
+  border-radius: var(--pp-radius);
+  box-shadow: var(--pp-shadow);
+  border: 1px solid rgba(45, 34, 29, 0.08);
+  overflow: hidden;
+
+  /* subtle entrance: slight X-axis motion per your preference */
+  transform: translateX(12px) translateY(0);
+  opacity: 0;
+  animation: toastIn var(--pp-anim-in) forwards;
+}
+
+.pp-modal--hide {
+  animation: toastOut var(--pp-anim-out) forwards;
+}
+
+/* Status accent bar */
+.pp-modal__bar {
+  height: 6px;
+  width: 100%;
+  background: var(--pp-err);
+}
+
+.pp-modal--success .pp-modal__bar {
+  background: var(--pp-ok);
+}
+.pp-modal--info .pp-modal__bar {
+  background: var(--pp-info);
+}
+
+/* Content */
+.pp-modal__content {
+  position: relative;
+  padding: calc(var(--pp-pad) + 2px) var(--pp-pad);
+}
+
+.pp-modal__text {
+  margin: 0;
+  line-height: 1.4;
+  font-size: 1.05rem;
+}
+
+/* Close button */
+.pp-modal__close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #7a6256;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+.pp-modal__close:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Variants (soft backgrounds) */
+.pp-modal--error {
+  background: linear-gradient(180deg, var(--pp-err-soft), #fff6f5);
+}
+.pp-modal--success {
+  background: linear-gradient(180deg, var(--pp-ok-soft), #fafffb);
+}
+.pp-modal--info {
+  background: linear-gradient(180deg, var(--pp-info-soft), #f9fbff);
+}
+
+/* ——— Animations ——— */
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes overlayOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes toastIn {
+  0% {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes toastOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+/* Small screens */
+@media (max-width: 520px) {
+  .pp-modal__text {
+    font-size: 1rem;
+  }
+}
