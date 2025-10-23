@@ -2,11 +2,113 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;  /* vertical center */
+    justify-content: flex-start;  /* vertical alignment changed */
     align-items: center;       /* horizontal center */
-    padding: 1rem;
+    padding: 3rem 2rem;
     text-align: center;
     font-family: "Inter", sans-serif;
     background-color: #f8f9fa; /* soft neutral */
     color: #2E3A3F;
+  }
+
+  .ob-title{
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #43342e;
+    margin-bottom: 1.5rem;
+    margin-top:50px;
+    padding:30px;
+    text-align: center;
+  }
+
+  .ob-card {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px);
+    border-radius: 25px;
+    padding: 2rem 2.5rem;
+    width: 100%;
+    margin: 0; /* grid gap controls spacing */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .ob-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+  }
+
+
+  
+  .ob-form {
+    display: grid;
+    grid-template-columns: 1fr; /* stack by default */
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "basic"
+      "emergency"
+      "health";
+    gap: 24px; /* vertical spacing between cards */
+    width: 100%;
+    max-width: 1300px; /* keep content tidy, increased */
+  }
+
+  /* Map the first three cards to grid areas by order */
+  .ob-form .ob-card:nth-of-type(1) { grid-area: basic; }
+  .ob-form .ob-card:nth-of-type(2) { grid-area: emergency; }
+  .ob-form .ob-card:nth-of-type(3) { grid-area: health; }
+
+  /* On wider screens: first card spans full width, next two sit side by side */
+  @media (min-width: 900px) {
+    .ob-form {
+      grid-template-columns: 1fr 1fr; /* two columns */
+      grid-template-areas:
+        "basic basic"
+        "emergency health";
+      gap: 28px; /* a bit more space on desktop */
+    }
+  }
+
+  .ob-subtitle {
+    background-color: rgba(206, 168, 168, 0.7);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(46, 58, 63, 0.1);
+    padding: 12px 20px;
+    color: #43342e;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .info-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+
+  .info-box {
+    border: 1px solid rgba(67, 52, 46, 0.2);
+    border-radius: 8px;
+    padding: 50px 90px;
+    position: center;
+    background-color: rgba(67, 52, 46, 0.05);
+    flex: 1 1 250px;   /* allows boxes to expand more */
+    max-width: 380px;  /* makes them visibly wider */
+    box-sizing: border-box;
+    margin-top: 20px;
+    margin-bottom: 50px;
+  }
+
+  .ob-btn{
+    border-radius: 20px;
+    border-color: bisque;
+    min-width: 80px;
+    min-height: 20px;
+    margin-bottom: 50px;
+    position: center;
   }

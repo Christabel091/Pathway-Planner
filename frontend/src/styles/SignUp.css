@@ -9,6 +9,7 @@
     width: 90%;
     max-width: 480px;
     height: 400px;
+    height: auto;
     transition: transform 0.9s ease;
     opacity: 0;
     transform: translateX(40px);
@@ -132,6 +133,7 @@ outline: none;
     background-repeat: no-repeat;
     background-position: right 14px center;
     background-size: 18px;
+    margin-bottom: 2px;
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
   }
   
