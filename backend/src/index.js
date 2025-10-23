@@ -7,7 +7,7 @@ import regenerateCodeRouter from "./routes/regenerateCode.js";
 //check
 console.log("JWT Secret:", process.env.JWT_SECRET);
 
-dotenv.config();
+dotenv.config({ override: true }); 
 const app = express();
 
 app.use(
