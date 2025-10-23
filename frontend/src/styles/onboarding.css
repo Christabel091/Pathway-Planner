@@ -1,114 +1,560 @@
-.container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;  /* vertical alignment changed */
-    align-items: center;       /* horizontal center */
-    padding: 3rem 2rem;
-    text-align: center;
-    font-family: "Inter", sans-serif;
-    background-color: #f8f9fa; /* soft neutral */
-    color: #2E3A3F;
+/* Reset to prevent overflow issues */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Page-in animation */
+@keyframes pageIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Main wrapper - matches base body gradient */
+.ob-wrap {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 80px 20px 80px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  background: transparent;
+  color: #3c2f2f;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Decorative floating elements - adjusted for base gradient */
+.ob-wrap::before,
+.ob-wrap::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ob-wrap::before {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, #d8a48f 0%, transparent 70%);
+  top: -180px;
+  right: -120px;
+  animation: float 8s ease-in-out infinite;
+}
+
+.ob-wrap::after {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #c68b73 0%, transparent 70%);
+  bottom: -120px;
+  left: -100px;
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+/* Title */
+.ob-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #43342e;
+  margin-bottom: 2rem;
+  margin-top: 1rem;
+  padding: 0;
+  text-align: center;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  letter-spacing: -0.5px;
+  position: relative;
+  z-index: 1;
+  animation: pageIn 1s ease forwards;
+  width: 100%;
+}
+
+.ob-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #d8a48f, #c68b73);
+  margin: 15px auto 0;
+  border-radius: 2px;
+}
+
+/* Subtitle styling - matches base theme */
+.ob-subtitle {
+  background: rgba(252, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border-radius: 12px;
+  box-shadow: 10px 4px 14px rgba(0, 0, 0, 0.06);
+  padding: 14px 24px;
+  color: #43342e;
+  font-size: 1rem;
+  margin-bottom: 30px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid rgba(216, 164, 143, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+/* Info row for displaying information boxes */
+.info-row {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: stretch;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.info-box {
+  border: 1px solid rgba(67, 52, 46, 0.2);
+  border-radius: 16px;
+  padding: 32px 48px;
+  background: rgba(252, 255, 255, 0.5);
+  backdrop-filter: blur(15px);
+  flex: 1 1 280px;
+  max-width: 400px;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 10px 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.info-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(67, 52, 46, 0.12);
+  border-color: rgba(216, 164, 143, 0.5);
+}
+
+/* Form container with grid layout */
+.ob-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "basic"
+    "emergency"
+    "health";
+  gap: 24px;
+  width: 100%;
+  max-width: 1100px;
+  position: relative;
+  z-index: 1;
+  animation: pageIn 1.2s ease forwards;
+  margin: 0 auto;
+}
+
+/* Map the first three cards to grid areas by order */
+.ob-form .ob-card:nth-of-type(1) {
+  grid-area: basic;
+  animation: cardSlideIn 0.8s ease forwards;
+}
+
+.ob-form .ob-card:nth-of-type(2) {
+  grid-area: emergency;
+  animation: cardSlideIn 0.8s ease forwards;
+  animation-delay: 0.1s;
+}
+
+.ob-form .ob-card:nth-of-type(3) {
+  grid-area: health;
+  animation: cardSlideIn 0.8s ease forwards;
+  animation-delay: 0.2s;
+}
+
+/* On wider screens: adaptive layout */
+@media (min-width: 900px) {
+  .ob-form {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "basic basic"
+      "emergency health";
+    gap: 32px;
+  }
+}
+
+/* Card styling with enhanced glassmorphism - matches base design */
+.ob-card {
+  background: rgba(252, 255, 255, 0.65);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 24px;
+  padding: 35px 40px;
+  width: 100%;
+  margin: 0;
+  box-shadow: 10px 4px 14px rgba(0, 0, 0, 0.06),
+    0 2px 8px rgba(216, 164, 143, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(216, 164, 143, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Card glow effect on hover */
+.ob-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 164, 143, 0.15),
+    transparent
+  );
+  transition: left 0.7s ease;
+}
+
+.ob-card:hover::before {
+  left: 100%;
+}
+
+.ob-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 48px rgba(67, 52, 46, 0.12),
+    0 4px 16px rgba(216, 164, 143, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(216, 164, 143, 0.4);
+}
+
+/* Card headers */
+.ob-card h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #43342e;
+  margin-bottom: 28px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ob-card h3::before {
+  content: "";
+  width: 6px;
+  height: 24px;
+  background: linear-gradient(180deg, #d8a48f, #c68b73);
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Label styling */
+.ob-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #6d5b52;
+  letter-spacing: 0.2px;
+}
+
+/* Input, select, textarea base styles */
+.ob-card input,
+.ob-card select,
+.ob-card textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(149, 117, 104, 0.25);
+  background: rgba(255, 255, 255, 0.9);
+  color: #43342e;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(67, 52, 46, 0.04);
+  box-sizing: border-box;
+}
+
+.ob-card input::placeholder,
+.ob-card textarea::placeholder {
+  color: rgba(70, 58, 52, 0.45);
+  font-style: italic;
+}
+
+/* Focus states with smooth animation */
+.ob-card input:focus,
+.ob-card select:focus,
+.ob-card textarea:focus {
+  border-color: #d8a48f;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 4px rgba(216, 164, 143, 0.15),
+    0 4px 12px rgba(216, 164, 143, 0.2);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+/* Hover states */
+.ob-card input:hover,
+.ob-card select:hover,
+.ob-card textarea:hover {
+  border-color: rgba(198, 139, 115, 0.5);
+  background: rgba(255, 255, 255, 1);
+}
+
+/* Select customization */
+.ob-card select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23c68b73' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 20px;
+  padding-right: 45px;
+}
+
+/* Textarea specific */
+.ob-card textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* Number inputs */
+.ob-card input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.ob-card input[type="number"]::-webkit-outer-spin-button,
+.ob-card input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Date input */
+.ob-card input[type="date"] {
+  cursor: pointer;
+}
+
+.ob-card input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: opacity(0.6);
+  transition: filter 0.3s ease;
+}
+
+.ob-card input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  filter: opacity(1);
+}
+
+/* Submit button - enhanced styling */
+.ob-btn {
+  background: linear-gradient(135deg, #d8a48f 0%, #c68b73 100%);
+  color: #fff;
+  padding: 16px 48px;
+  border: none;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(216, 164, 143, 0.4),
+    0 2px 4px rgba(67, 52, 46, 0.1);
+  margin-top: 20px;
+  margin-bottom: 50px;
+  min-width: 200px;
+  min-height: 52px;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+}
+
+/* Button shimmer effect */
+.ob-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.ob-btn:hover::before {
+  left: 100%;
+}
+
+.ob-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(216, 164, 143, 0.5),
+    0 4px 8px rgba(67, 52, 46, 0.15);
+}
+
+.ob-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(216, 164, 143, 0.4),
+    0 2px 4px rgba(67, 52, 46, 0.1);
+}
+
+.ob-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .ob-wrap {
+    padding: 2rem 1.5rem 3rem;
   }
 
-  .ob-title{
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #43342e;
-    margin-bottom: 1.5rem;
-    margin-top:50px;
-    padding:30px;
-    text-align: center;
+  .ob-title {
+    font-size: 1.9rem;
+    margin-top: 30px;
+    padding: 20px;
   }
 
   .ob-card {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(20px);
-    border-radius: 25px;
-    padding: 2rem 2.5rem;
-    width: 100%;
-    margin: 0; /* grid gap controls spacing */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .ob-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+    padding: 28px 24px;
+    border-radius: 20px;
   }
 
-
-  
-  .ob-form {
-    display: grid;
-    grid-template-columns: 1fr; /* stack by default */
-    grid-template-rows: auto auto auto;
-    grid-template-areas:
-      "basic"
-      "emergency"
-      "health";
-    gap: 24px; /* vertical spacing between cards */
-    width: 100%;
-    max-width: 1300px; /* keep content tidy, increased */
+  .ob-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 24px;
   }
 
-  /* Map the first three cards to grid areas by order */
-  .ob-form .ob-card:nth-of-type(1) { grid-area: basic; }
-  .ob-form .ob-card:nth-of-type(2) { grid-area: emergency; }
-  .ob-form .ob-card:nth-of-type(3) { grid-area: health; }
-
-  /* On wider screens: first card spans full width, next two sit side by side */
-  @media (min-width: 900px) {
-    .ob-form {
-      grid-template-columns: 1fr 1fr; /* two columns */
-      grid-template-areas:
-        "basic basic"
-        "emergency health";
-      gap: 28px; /* a bit more space on desktop */
-    }
+  .ob-card label {
+    margin-bottom: 18px;
   }
 
-  .ob-subtitle {
-    background-color: rgba(206, 168, 168, 0.7);
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(46, 58, 63, 0.1);
-    padding: 12px 20px;
-    color: #43342e;
-    font-size: 1rem;
-    margin-bottom: 20px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .info-row {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 40px;
-    flex-wrap: wrap;
+  .ob-btn {
+    padding: 14px 40px;
+    font-size: 0.9rem;
+    min-width: 180px;
   }
 
   .info-box {
-    border: 1px solid rgba(67, 52, 46, 0.2);
-    border-radius: 8px;
-    padding: 50px 90px;
-    position: center;
-    background-color: rgba(67, 52, 46, 0.05);
-    flex: 1 1 250px;   /* allows boxes to expand more */
-    max-width: 380px;  /* makes them visibly wider */
-    box-sizing: border-box;
-    margin-top: 20px;
-    margin-bottom: 50px;
+    padding: 28px 36px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .ob-wrap {
+    padding: 1.5rem 1rem 2rem;
   }
 
-  .ob-btn{
-    border-radius: 20px;
-    border-color: bisque;
-    min-width: 80px;
-    min-height: 20px;
-    margin-bottom: 50px;
-    position: center;
+  .ob-title {
+    font-size: 1.6rem;
+    margin-top: 20px;
+    padding: 15px;
   }
+
+  .ob-card {
+    padding: 20px 18px;
+  }
+
+  .ob-card h3 {
+    font-size: 1.15rem;
+  }
+
+  .ob-card input,
+  .ob-card select,
+  .ob-card textarea {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  .ob-btn {
+    padding: 12px 32px;
+    min-width: 160px;
+    font-size: 0.85rem;
+  }
+
+  .info-box {
+    padding: 24px 28px;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Accessibility improvements */
+.ob-card input:focus-visible,
+.ob-card select:focus-visible,
+.ob-card textarea:focus-visible,
+.ob-btn:focus-visible {
+  outline: 3px solid #d8a48f;
+  outline-offset: 2px;
+}
+
+/* Loading state for form */
+.ob-form.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.ob-form.loading .ob-btn::after {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

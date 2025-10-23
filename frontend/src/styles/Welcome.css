@@ -1,5 +1,5 @@
 body {
-  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-family: Georgia, "Times New Roman", Times, serif;
   background: linear-gradient(180deg, #f9f6f1, #f5ece5, #e7b19d);
   background-attachment: fixed;
   min-height: 100vh;
@@ -29,7 +29,7 @@ body {
 }
 
 .welcome-container:hover {
-  transform:translateY(-5px);
+  transform: translateY(-5px);
 }
 
 /* Title */
@@ -44,15 +44,15 @@ body {
 }
 /* Motto text */
 .motto {
-    font-style: italic;
-    font-size: 1rem;
-    color: #7a6458;
-    margin-top: -10px;
-    margin-bottom: 25px;
-    transform: translateX(20px);
-    animation: itemSlide 1.2s ease forwards;
-    animation-delay: 100ms;
-  }
+  font-style: italic;
+  font-size: 1rem;
+  color: #7a6458;
+  margin-top: -10px;
+  margin-bottom: 25px;
+  transform: translateX(20px);
+  animation: itemSlide 1.2s ease forwards;
+  animation-delay: 100ms;
+}
 
 /* Link group */
 .welcome-container div {
@@ -86,15 +86,31 @@ footer {
   opacity: 0.85;
 }
 
-.welcome-container > div a:nth-child(1){ animation-delay: 480ms; }
-.welcome-container > div a:nth-child(2){ animation-delay: 640ms; }
-.welcome-container > div a:nth-child(3){ animation-delay: 800ms; }
-
-@keyframes pageIn{
-  from{ opacity: 0; transform: translateX(40px); }
-  to  { opacity: 1; transform: translateX(0); }
+.welcome-container > div a:nth-child(1) {
+  animation-delay: 480ms;
 }
-@keyframes itemSlide{
-    from{ transform: translateX(20px); }
-    to  { transform: translateX(0); }
+.welcome-container > div a:nth-child(2) {
+  animation-delay: 640ms;
+}
+.welcome-container > div a:nth-child(3) {
+  animation-delay: 800ms;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
   }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes itemSlide {
+  from {
+    transform: translateX(20px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
