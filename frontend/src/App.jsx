@@ -50,7 +50,7 @@ function PublicRedirect() {
   return profileCompleted ? (
     <Navigate to="/home" replace />
   ) : (
-    <Navigate to="/onboarding" replace /> // ✅ use /onboarding (we define it below)
+    <Navigate to="/onboarding" replace />
   );
 }
 

@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext.jsx";
 import { getToken } from "../utility/auth.js";
+import { importRsaPublicKey, rsaEncryptToBase64 } from "../utility/crypto.js";
 import Modal from "../components/Modal.jsx";
 import "../styles/onboarding.css";
 
@@ -17,6 +18,43 @@ export default function PatientOnboarding({ setUserProfile }) {
 
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState("error");
+  const [serverPubKey, setServerPubKey] = useState(null); // CryptoKey
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchKey() {
+      try {
+        const res = await fetch(`${base_URL}/onboarding/crypto/public-key`, {
+          method: "GET",
+          headers: { Accept: "text/plain" },
+        });
+        const pem = await res.text(); // can be JSON too; adjust if needed
+        if (!res.ok || !pem.includes("BEGIN PUBLIC KEY")) {
+          throw new Error("Invalid public key response");
+        }
+        const key = await importRsaPublicKey(pem);
+        if (!cancelled) setServerPubKey(key);
+      } catch (err) {
+        console.error("Failed to load server public key:", err);
+        if (!cancelled) {
+          setModalType("error");
+          setModalMessage("Security setup error: cannot load encryption key.");
+        }
+      }
+    }
+
+    fetchKey();
+    return () => {
+      cancelled = true;
+    };
+  }, [base_URL]);
+
+  const safeNavigate = (to, opts) => {
+    if (didNavigate.current) return;
+    didNavigate.current = true;
+    navigate(to, opts);
+  };
 
   const [form, setForm] = useState({
     full_name: "",
@@ -33,16 +71,16 @@ export default function PatientOnboarding({ setUserProfile }) {
     current_medications: "",
     height_cm: "",
     weight_kg: "",
-    clinicianInviteCode: "",
+    clinicianInviteCode: "", // unified naming
   });
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const safeNavigate = (to, opts) => {
-    if (didNavigate.current) return;
-    didNavigate.current = true;
-    navigate(to, opts);
+  // Small helpers to lightly sanitize/mask common inputs (optional)
+  const onPhoneChange = (e) => {
+    const digits = e.target.value.replace(/[^\d+()-\s]/g, "");
+    setForm((f) => ({ ...f, [e.target.name]: digits }));
   };
 
   const onSubmit = async (e) => {
@@ -59,14 +97,55 @@ export default function PatientOnboarding({ setUserProfile }) {
       return;
     }
 
+    if (!serverPubKey) {
+      setModalType("error");
+      setModalMessage("Encryption not ready. Please try again in a moment.");
+      return;
+    }
+    const sensitiveFields = {
+      full_name: form.full_name,
+      dob: form.dob,
+      phone_number: form.phone_number,
+      address: form.address,
+      relative_contact_name: form.relative_contact_name,
+      relative_contact_email: form.relative_contact_email,
+      relative_contact_phone: form.relative_contact_phone,
+      allergies: form.allergies,
+      chronic_conditions: form.chronic_conditions,
+      current_medications: form.current_medications,
+      height_cm: form.height_cm,
+      weight_kg: form.weight_kg,
+    };
+
+    const nonSensitive = {
+      gender: form.gender,
+      blood_type: form.blood_type,
+      clinicianInviteCode: form.clinicianInviteCode || "",
+    };
+
     try {
+      const sensitiveJson = JSON.stringify(sensitiveFields);
+      const ciphertextB64 = await rsaEncryptToBase64(
+        serverPubKey,
+        sensitiveJson
+      );
+
+      const payload = {
+        userId,
+        email,
+        ...nonSensitive,
+        sensitive: ciphertextB64,
+        enc_alg: "RSA-OAEP-256",
+        enc_v: 1,
+      };
+
       const response = await fetch(`${base_URL}/onboarding/patients`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...form, userId, email }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -77,9 +156,7 @@ export default function PatientOnboarding({ setUserProfile }) {
 
         if (data.user) setUser(data.user);
         if (data.profile) setUserProfile?.(data.profile);
-        setModalType("success");
-        setModalMessage("Profile completed successfully! Redirecting...");
-        // Small delay for UX, and guard for StrictMode
+
         setTimeout(() => safeNavigate("/home", { replace: true }), 1000);
       } else {
         setModalType("error");
@@ -135,7 +212,7 @@ export default function PatientOnboarding({ setUserProfile }) {
               <input
                 name="phone_number"
                 value={form.phone_number}
-                onChange={onChange}
+                onChange={onPhoneChange}
               />
             </div>
             <div className="field span-2">
@@ -145,8 +222,8 @@ export default function PatientOnboarding({ setUserProfile }) {
             <div className="field">
               <label>Clinician Code (optional)</label>
               <input
-                name="inviteCode"
-                value={form.inviteCode}
+                name="clinicianInviteCode"
+                value={form.clinicianInviteCode}
                 onChange={onChange}
                 placeholder="e.g., X9K2PD"
               />
@@ -179,7 +256,7 @@ export default function PatientOnboarding({ setUserProfile }) {
               <input
                 name="relative_contact_phone"
                 value={form.relative_contact_phone}
-                onChange={onChange}
+                onChange={onPhoneChange}
               />
             </div>
           </div>
@@ -253,7 +330,7 @@ export default function PatientOnboarding({ setUserProfile }) {
 
         <div className="actions">
           <button className="ob-btn" type="submit">
-            Continue
+            {serverPubKey ? "Continue" : "Securing…"}
           </button>
         </div>
       </form>

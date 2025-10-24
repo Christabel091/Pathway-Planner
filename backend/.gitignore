@@ -3,3 +3,11 @@ node_modules
 .env
 
 /generated/prisma
+
+
+# RSA encryption keys
+rsa_private.pem
+rsa_public.pem
+
+# Environment files
+.env

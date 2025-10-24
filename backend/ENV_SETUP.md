@@ -207,4 +207,159 @@ Add it to `.gitignore` and share it privately with teammates.
 
 ---
 
-**Now you’re ready to build, migrate, and query your Pathway Planner database! 🚀**
+**Now you’re ready to build, migrate, and query your Pathway Planner database!**
+
+# 🔐 Pathway Planner Backend — RSA Encryption & Compliance Setup
+
+This guide explains how to **generate** and **set up RSA encryption keys** used for protecting patient onboarding data in the **Pathway Planner** project.
+
+---
+
+## 🪄 Step 1 — Generate RSA Keys (no OpenSSL required)
+
+In the `backend/` folder, run the following command to create both keys:
+
+```bash
+node generateKeys.js
+```
+
+This script will automatically generate:
+
+```
+backend/rsa_private.pem
+backend/rsa_public.pem
+```
+
+✅ Output example:
+
+```
+✅ RSA keys generated!
+- Private key: rsa_private.pem
+- Public key: rsa_public.pem
+```
+
+---
+
+## 🗝️ Step 2 — Add Keys to .env
+
+After generation, open both `.pem` files in a text editor.
+
+### Option A — Multiline format (local development)
+
+In your `backend/.env` file, copy the **entire contents** of each key:
+
+```bash
+RSA_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBK...
+...rest of your private key...
+-----END PRIVATE KEY-----"
+
+RSA_PUBLIC_KEY_PEM="-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...
+...rest of your public key...
+-----END PUBLIC KEY-----"
+```
+
+> Keep the `-----BEGIN` and `-----END` lines exactly as they appear.
+
+---
+
+### Option B — Single-line format (Render, Railway, or Vercel)
+
+If your platform doesn’t support multiline `.env` values, replace all newlines with `\n` (one long line):
+
+```bash
+RSA_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkq...\n-----END PRIVATE KEY-----"
+RSA_PUBLIC_KEY_PEM="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9...\n-----END PUBLIC KEY-----"
+```
+
+---
+
+## 🧪 Step 3 — Verify the Endpoint
+
+Start your backend and visit the following in your browser or Postman:
+
+```
+http://localhost:3000/onboarding/crypto/public-key
+```
+
+✅ You should see output like:
+
+```
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...
+-----END PUBLIC KEY-----
+```
+
+If this appears, your backend is correctly serving the key to the frontend.
+
+---
+
+## ⚙️ Step 4 — Example .env File
+
+Here’s what your `.env` file might look like:
+
+```bash
+# Backend Configuration
+PORT=3000
+NODE_ENV=development
+DATABASE_URL="mysql://user:pass@localhost:3306/pathway_planner"
+JWT_SECRET="your-super-secure-secret"
+
+# RSA Keys (used for encrypting/decrypting patient onboarding data)
+RSA_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----
+...paste private key here...
+-----END PRIVATE KEY-----"
+
+RSA_PUBLIC_KEY_PEM="-----BEGIN PUBLIC KEY-----
+...paste public key here...
+-----END PUBLIC KEY-----"
+```
+
+---
+
+## 🧰 Step 5 — Security Guidelines
+
+✅ **Commit these (safe):**
+
+- `backend/generateKeys.js`
+- `backend/routes/infoRouter.js`
+- `frontend/src/utility/crypto.js`
+- Updated `frontend/src/pages/PatientOnboarding.jsx`
+- `.env.example` (with empty placeholders)
+
+❌ **Do NOT commit (sensitive):**
+
+- `rsa_private.pem`
+- `rsa_public.pem`
+- Real `.env` files with key contents
+
+---
+
+## 🧼 Step 6 — Regenerating Keys (if needed)
+
+If you ever need to regenerate the keys (e.g., new teammate, compromised keys):
+
+```bash
+# Remove old keys
+rm rsa_private.pem rsa_public.pem
+
+# Generate new ones
+node generateKeys.js
+```
+
+Then, update the `.env` file with the new key contents.
+
+---
+
+## 🧠 Notes
+
+- The **public key** is safe to expose via the `/onboarding/crypto/public-key` endpoint — the frontend uses it to encrypt data.
+- The **private key** is only used by the backend to decrypt and must stay private.
+- Never upload your `.pem` or `.env` files to GitHub.
+- Each teammate should **generate their own local key pair** using `node generateKeys.js`.
+
+---
+
+✅ **Done!**
+Your RSA encryption system is now active, and all sensitive onboarding data will be securely protected during transmission and storage.
