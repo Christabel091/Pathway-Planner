@@ -472,5 +472,146 @@ infoRouter.get("/clinicians/:id", async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 });
+//  Caretaker onboarding (no encryption needed)
+infoRouter.post("/caretakers", async (req, res) => {
+  try {
+    const { userId, email, full_name, relationship, phone_number } = req.body;
+
+    if (!userId || !email) {
+      return res.status(400).json({ error: "Invalid user data" });
+    }
+
+    if (!full_name || !full_name.toString().trim()) {
+      return res.status(400).json({ error: "Full name is required" });
+    }
+
+    // Prevent duplicate caretaker profile for the same user
+    const existing = await prisma.caretaker.findUnique({
+      where: { user_id: userId },
+    });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ error: "Profile already exists, kindly login" });
+    }
+
+    const newProfile = await prisma.caretaker.create({
+      data: {
+        user_id: userId,
+        full_name: full_name.trim(),
+        relationship: emptyToNull(relationship),
+        phone_number: emptyToNull(phone_number),
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      select: {
+        id: true,
+        user_id: true,
+        full_name: true,
+        relationship: true,
+        phone_number: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+
+    // Mark the user's onboarding as completed (mirrors clinician/patient flow)
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { profileCompleted: true, email },
+      select: {
+        id: true,
+        email: true,
+        UserName: true,
+        role: true,
+        profileCompleted: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Caretaker profile created successfully",
+      profile: newProfile,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error creating caretaker profile:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Optional: fetch a caretaker profile (parity with GET /clinicians/:id)
+infoRouter.get("/caretakers/:id", async (req, res) => {
+  try {
+    const caretakerId = parseInt(req.params.id, 10);
+    if (!caretakerId) {
+      return res.status(400).json({ error: "Invalid caretaker ID" });
+    }
+
+    const caretaker = await prisma.caretaker.findUnique({
+      where: { id: caretakerId },
+      select: {
+        id: true,
+        user_id: true,
+        full_name: true,
+        relationship: true,
+        phone_number: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+
+    if (!caretaker) {
+      return res.status(404).json({ error: "Caretaker not found" });
+    }
+
+    return res.status(200).json({ profile: caretaker });
+  } catch (error) {
+    console.error("Error fetching caretaker profile:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// --- Admin onboarding (no separate table needed) ---
+infoRouter.post("/admins", async (req, res) => {
+  try {
+    const { userId, email, display_name } = req.body;
+
+    if (!userId || !email) {
+      return res.status(400).json({ error: "Invalid user data" });
+    }
+
+    // Update only the User record: mark as onboarded, sync email,
+    // and optionally set display name into UserName.
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        profileCompleted: true,
+        email,
+        ...(display_name && display_name.trim()
+          ? { UserName: display_name.trim() }
+          : {}),
+      },
+      select: {
+        id: true,
+        email: true,
+        UserName: true,
+        role: true,
+        profileCompleted: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Admin onboarding completed",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error completing admin onboarding:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
 
 export default infoRouter;
