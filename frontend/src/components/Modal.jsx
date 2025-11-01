@@ -1,7 +1,7 @@
 // src/components/Modal.jsx
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import "../styles/modal.css";
+import "../styles/legacy/modal.css";
 
 export default function Modal({
   message,

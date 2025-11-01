@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext.jsx";
 import { getToken } from "../utility/auth.js";
 import Modal from "../components/Modal.jsx";
-import "../styles/onboarding.css";
+import "../styles/legacy/onboarding.css";
 
 export default function AdminOnboarding() {
   const base_URL = import.meta.env.VITE_BACKEND_URL;
@@ -69,6 +69,7 @@ export default function AdminOnboarding() {
   }
 
   return (
+  <div className="onboarding-bg">
     <div className="ob-wrap">
       <h1 className="ob-title">Admin Onboarding</h1>
 
@@ -108,6 +109,7 @@ export default function AdminOnboarding() {
           onClose={() => setModalMessage("")}
         />
       )}
+    </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-body {
+.welcome-bg {
   font-family: Georgia, "Times New Roman", Times, serif;
   background: linear-gradient(180deg, #f9f6f1, #f5ece5, #e7b19d);
   background-attachment: fixed;
@@ -8,7 +8,8 @@ body {
   align-items: flex-start;
   padding-top: 100px;
   color: #3c2f2f;
-  margin-top: 120%;
+  background-repeat: no-repeat;
+background-size: cover;
 }
 
 /* Centered container */

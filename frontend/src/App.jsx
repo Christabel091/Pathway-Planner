@@ -3,7 +3,7 @@ import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Navbar from "./pages/navbar";
-import Intro from "./pages/intro";
+import Intro from "./pages/Intro";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
@@ -11,10 +11,17 @@ import PatientOnboarding from "./pages/PatientOnboarding";
 import ClinicianOnboarding from "./pages/ClinicianOnboarding";
 import CaretakerOnboarding from "./pages/CaretakerOnboarding";
 import AdminOnboarding from "./pages/AdminOnboarding";
+import RoleBasedDashboard from "./pages/RoleBasedDashboard"; 
+import PatientDashboard from "./pages/dashboard/PatientDashboard";
+import ClinicianDashboard from "./pages/dashboard/ClinicianDashboard";
+import CaretakerDashboard from "./pages/dashboard/CaretakerDashboard";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
+
+
+
 
 import { useState } from "react";
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -22,7 +29,6 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/AuthContext";
-
 // ——— Guards ———
 function RequireAuth() {
   const { isAuthed, loading } = useAuth();
@@ -39,20 +45,23 @@ function RequireProfileComplete() {
 function BlockIfProfileComplete() {
   const { profileCompleted, loading } = useAuth();
   if (loading) return null;
-  return profileCompleted ? <Navigate to="/home" replace /> : <Outlet />;
+  // ✅ redirect to /dashboard instead of /home
+  return profileCompleted ? <Navigate to="/dashboard" replace /> : <Outlet />;
 }
 
-// Public pages: if authed, send them to the right place
 function PublicRedirect() {
   const { isAuthed, profileCompleted, loading } = useAuth();
   if (loading) return null;
-  if (!isAuthed) return <Outlet />;
+  if (!isAuthed) return <Outlet />; // let unauthenticated users see public pages
+
+  // ✅ redirect authenticated users correctly
   return profileCompleted ? (
-    <Navigate to="/home" replace />
+    <Navigate to="/dashboard" replace />
   ) : (
     <Navigate to="/onboarding" replace />
   );
 }
+
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -114,7 +123,14 @@ function AppRoutes() {
       {/* Fully authed + profile complete */}
       <Route element={<RequireAuth />}>
         <Route element={<RequireProfileComplete />}>
-          <Route path="/home" element={<Home profile={userProfile} />} />
+            <Route path="/dashboard">
+            <Route index element={<RoleBasedDashboard />} /> {/* exact match for /dashboard */}
+            <Route path="patient" element={<PatientDashboard />} />
+            <Route path="clinician" element={<ClinicianDashboard />} />
+            <Route path="caretaker" element={<CaretakerDashboard />} />
+            <Route path="admin" element={<AdminDashboard />} />
+          </Route>
+            
         </Route>
       </Route>
 
@@ -127,7 +143,17 @@ function AppRoutes() {
 function Layout() {
   const location = useLocation();
   // Hide navbar on the splash pages if you want (optional)
-  const hideNavOn = new Set(["/", "/Welcome", "/Login", "/SignUp"]);
+  const hideNavOn = new Set([
+    "/", 
+    "/Welcome", 
+    "/Login", 
+    "/SignUp",
+    "/dashboard", //hidden when dashboard is open as well
+    "/dashboard/caretaker",
+    "/dashboard/patient",
+    "/dashboard/clinician",
+    "/dashboard/admin",]);
+    
   return (
     <>
       {!hideNavOn.has(location.pathname) && <Navbar />}
@@ -136,12 +162,13 @@ function Layout() {
   );
 }
 
+
+
+
 function App() {
   return (
     <AuthProvider>
-      <Router>
         <Layout />
-      </Router>
     </AuthProvider>
   );
 }

@@ -1,4 +1,4 @@
-import "../styles/SignUp.css";
+import "../styles/legacy/SignUp.css";
 import "../pages/PatientOnboarding";
 /** @format */
 
@@ -31,6 +31,7 @@ const SignUp = () => {
   };
 
   return (
+  <div className = "signup-bg">
     <div className="overlay">
       <div className="auth-container">
         <form onSubmit={handleSignUp} className="auth-form">
@@ -81,6 +82,7 @@ const SignUp = () => {
         </form>
       </div>
     </div>
+  </div>
   );
 };
 

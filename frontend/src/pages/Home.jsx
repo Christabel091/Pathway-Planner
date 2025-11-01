@@ -4,7 +4,7 @@ const Home = () => {
   const { user } = useAuth();
   console.log("User in Home:", user);
   return (
-    <div>
+    <div className="home-bg">
       <h1>Home Page - Dashbord welcome {user.username}</h1>
     </div>
   );

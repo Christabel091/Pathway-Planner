@@ -1,8 +1,9 @@
 // src/pages/Services.jsx
-import "../styles/Pages.css";
+import "../styles/legacy/Pages.css";
 
 export default function Services() {
   return (
+  <div className = "pages-bg">
     <section className="page">
       <h1>Services</h1>
       <div className="services-container">
@@ -28,5 +29,6 @@ export default function Services() {
         </div>
       </div>
     </section>
+  </div>
   );
 }
