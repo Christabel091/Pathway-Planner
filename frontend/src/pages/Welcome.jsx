@@ -1,4 +1,4 @@
-import '../styles/Welcome.css';
+import '../styles/legacy/Welcome.css';
 
 /** @format */
 
@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 const Welcome = () => {
   return (
+  <div className = "welcome-bg">
     <div className="welcome-container">
       <h1 className="">Pathway-Planner</h1>
       <p className="motto"> - Gentle goals lasting care - </p>
@@ -32,6 +33,7 @@ const Welcome = () => {
         </p>
       </footer>
     </div>
+  </div>
   );
 };
 

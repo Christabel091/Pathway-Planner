@@ -1,8 +1,9 @@
 // src/pages/About.jsx
-import "../styles/Pages.css";
+import "../styles/legacy/Pages.css";
 
 export default function About() {
   return (
+  <div className= "pages-bg">
     <section className="page about-page">
       <div className="about-content">
         <div className="about-text">
@@ -25,5 +26,6 @@ export default function About() {
         />
       </div>
     </section>
+  </div>
   );
 }

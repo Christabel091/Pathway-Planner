@@ -1,0 +1,11 @@
+.home-bg {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  background: linear-gradient(180deg, #f9f6f1, #f5ece5, #e7b19d);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 100px;
+  color: #3c2f2f;
+}

@@ -4,7 +4,7 @@ import { useAuth } from "../components/AuthContext.jsx";
 import { getToken } from "../utility/auth.js";
 import { importRsaPublicKey, rsaEncryptToBase64 } from "../utility/crypto.js";
 import Modal from "../components/Modal.jsx";
-import "../styles/onboarding.css";
+import "../styles/legacy/onboarding.css";
 
 export default function PatientOnboarding({ setUserProfile }) {
   const base_URL = import.meta.env.VITE_BACKEND_URL;
@@ -172,6 +172,7 @@ export default function PatientOnboarding({ setUserProfile }) {
   };
 
   return (
+  <div className="onboarding-bg">
     <div className="ob-wrap">
       <h1 className="ob-title">Patient Onboarding</h1>
 
@@ -344,5 +345,6 @@ export default function PatientOnboarding({ setUserProfile }) {
         />
       )}
     </div>
+  </div>
   );
 }

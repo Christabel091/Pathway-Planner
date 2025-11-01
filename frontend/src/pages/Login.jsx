@@ -18,6 +18,7 @@ const Login = () => {
   };
 
   return (
+  <div className="login-bg">
     <div className="overlay">
       <div className="auth-container">
         <form onSubmit={handleLogin} className="auth-form">
@@ -45,6 +46,7 @@ const Login = () => {
           </p>
         </form>
       </div>
+    </div>
     </div>
   );
 };
