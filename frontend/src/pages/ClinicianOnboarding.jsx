@@ -74,7 +74,7 @@ export default function ClinicianOnboarding({ setUserProfile }) {
         setModalType("success");
         setModalMessage("Profile completed successfully! Redirecting...");
         // redirect after short delay
-        setTimeout(() => navigate("/home", { replace: true }), 1800);
+        setTimeout(() => navigate("/dashboard", { replace: true }), 1800);
       } else {
         setModalType("error");
         setModalMessage(
@@ -89,97 +89,97 @@ export default function ClinicianOnboarding({ setUserProfile }) {
   };
 
   return (
-  <div className="onboarding-bg">
-    <div className="ob-wrap">
-      <h1 className="ob-title">Clinician Onboarding</h1>
+    <div className="onboarding-bg">
+      <div className="ob-wrap">
+        <h1 className="ob-title">Clinician Onboarding</h1>
 
-      <form className="ob-form" onSubmit={onSubmit}>
-        <div className="ob-card">
-          <h3>Profile</h3>
+        <form className="ob-form" onSubmit={onSubmit}>
+          <div className="ob-card">
+            <h3>Profile</h3>
 
-          <label>
-            Full Name
-            <input
-              name="full_name"
-              value={form.full_name}
-              onChange={onChange}
-            />
-          </label>
+            <label>
+              Full Name
+              <input
+                name="full_name"
+                value={form.full_name}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            Specialty
-            <input
-              name="specialty"
-              value={form.specialty}
-              onChange={onChange}
-            />
-          </label>
+            <label>
+              Specialty
+              <input
+                name="specialty"
+                value={form.specialty}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            License Number
-            <input
-              name="license_number"
-              value={form.license_number}
-              onChange={onChange}
-            />
-          </label>
+            <label>
+              License Number
+              <input
+                name="license_number"
+                value={form.license_number}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            Clinic Name
-            <input
-              name="clinic_name"
-              value={form.clinic_name}
-              onChange={onChange}
-            />
-          </label>
-        </div>
+            <label>
+              Clinic Name
+              <input
+                name="clinic_name"
+                value={form.clinic_name}
+                onChange={onChange}
+              />
+            </label>
+          </div>
 
-        <div className="ob-card">
-          <h3>Contact</h3>
+          <div className="ob-card">
+            <h3>Contact</h3>
 
-          <label>
-            Contact Email
-            <input
-              type="email"
-              name="contact_email"
-              value={form.contact_email}
-              onChange={onChange}
-            />
-          </label>
+            <label>
+              Contact Email
+              <input
+                type="email"
+                name="contact_email"
+                value={form.contact_email}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            Contact Phone
-            <input
-              name="contact_phone"
-              value={form.contact_phone}
-              onChange={onChange}
-            />
-          </label>
+            <label>
+              Contact Phone
+              <input
+                name="contact_phone"
+                value={form.contact_phone}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            Office Address
-            <input
-              name="office_address"
-              value={form.office_address}
-              onChange={onChange}
-            />
-          </label>
-        </div>
+            <label>
+              Office Address
+              <input
+                name="office_address"
+                value={form.office_address}
+                onChange={onChange}
+              />
+            </label>
+          </div>
 
-        <button className="ob-btn" type="submit">
-          Complete Profile
-        </button>
-      </form>
+          <button className="ob-btn" type="submit">
+            Complete Profile
+          </button>
+        </form>
 
-      {modalMessage && (
-        <Modal
-          message={modalMessage}
-          type={modalType}
-          duration={7000}
-          onClose={() => setModalMessage("")}
-        />
-      )}
+        {modalMessage && (
+          <Modal
+            message={modalMessage}
+            type={modalType}
+            duration={7000}
+            onClose={() => setModalMessage("")}
+          />
+        )}
+      </div>
     </div>
-  </div>
   );
 }

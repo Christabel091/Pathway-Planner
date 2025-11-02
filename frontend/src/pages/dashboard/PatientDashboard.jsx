@@ -1,141 +1,552 @@
-import React from "react";
-//these sections will be needed in the future
-//import InboxSection from "../../components/InboxSection";
-//import GoalsSection from "../../components/GoalsSection";
-//import MedicationsSection from "../../components/MedicationsSection";
-//import LabResultsSection from "../../components/LabResultsSection";
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState, useMemo, use } from "react";
 import { useAuth } from "../../components/AuthContext";
 import { PieChart, Pie, Cell } from "recharts";
+import "../../styles/tailwind/dashboard.css";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import AddClinicianModal from "../../components/AddClinicanModal";
+/** ---- MOCKS / SHAPES ----
+ * Replace these with real data from your API once wired.
+ */
 
+const PIE_COLORS = {
+  completedGradientStart: "#aa7b4fff",
+  completedGradientEnd: "#754829ff",
+  remaining: "#dcb2a1ff",
+};
 
-//for now, we will keep the goals as constant
-const goalProgress = [
-  { name: "Completed", value: 70 },
-  { name: "Remaining", value: 30 },
-];
+// Simple inline SVG icons (no extra deps)
+const Icons = {
+  menu: (cls = "tw-w-6 tw-h-6") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeWidth="2" strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  ),
+  chevron: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeWidth="2" strokeLinecap="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  ),
+  dashboard: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path
+        strokeWidth="2"
+        d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z"
+      />
+    </svg>
+  ),
+  goals: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeWidth="2" d="M12 3v18M3 12h18M4 8h8M12 16h8" />
+    </svg>
+  ),
+  daily: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="9" strokeWidth="2" />
+      <path strokeWidth="2" d="M12 7v5l3 2" />
+    </svg>
+  ),
+  meds: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <rect x="3" y="7" width="18" height="13" rx="2" strokeWidth="2" />
+      <path strokeWidth="2" d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+      <path strokeWidth="2" d="M12 11v6M9 14h6" />
+    </svg>
+  ),
+  labs: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path
+        strokeWidth="2"
+        d="M9 3v6l-5 9a2 2 0 001.7 3h12.6a2 2 0 001.7-3l-5-9V3"
+      />
+      <path strokeWidth="2" d="M9 3h6" />
+    </svg>
+  ),
+  meals: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path
+        strokeWidth="2"
+        d="M4 3v8a2 2 0 002 2h2V3M12 3v10a4 4 0 004 4h2V3"
+      />
+    </svg>
+  ),
+  inbox: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path
+        strokeWidth="2"
+        d="M22 13V6a2 2 0 00-2-2H4a2 2 0 00-2 2v7l4 5h12l4-5z"
+      />
+      <path strokeWidth="2" d="M6 10l6 3 6-3" />
+    </svg>
+  ),
+  settings: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeWidth="2" d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
+      <path
+        strokeWidth="2"
+        d="M2 12h2m16 0h2M12 2v2m0 16v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+      />
+    </svg>
+  ),
+  logout: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeWidth="2" d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <path strokeWidth="2" d="M16 17l5-5-5-5M21 12H9" />
+    </svg>
+  ),
+};
 
-//colors for the pie chard
-const COLORS = ["#059669", "#f9caca"]; 
+export default function PatientDashboard({ patientInfo, setPatientInfo }) {
+  const { user, logout } = useAuth();
 
-export default function PatientDashboard() {
-
-    const { user } = useAuth(); // 👈 get user from AuthContext
-
-  // fallback in case user data isn't loaded yet
+  const base_URL = import.meta.env.VITE_BACKEND_URL;
   const displayName = user?.username || "Patient";
+  const navigate = useNavigate();
+  const [isAddClinicanModal, setIsAddClinicanModal] = useState(false);
+  const [patientsClinician, setPatientsClinician] = useState(null);
+  const [loadingPatient, setLoadingPatient] = useState(false);
+  const [patientError, setPatientError] = useState(null);
+
+  useEffect(() => {
+    if (!user?.id || !base_URL) return; // guard until we have what we need
+
+    const ctrl = new AbortController();
+
+    (async () => {
+      try {
+        setLoadingPatient(true);
+        setPatientError(null);
+
+        const res = await fetch(`${base_URL}/patients/${user.id}`, {
+          method: "GET",
+          credentials: "include",
+          signal: ctrl.signal,
+          // headers not required for GET, but harmless if you keep them
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setPatientInfo(data);
+        console.log("Fetched patient info:", data);
+        //then fetch patients clinician info based on clinician_id
+        if (data.clinician_id && data.clinician_id !== 1) {
+          const response = await fetch(
+            `${base_URL}/onboarding/clinicians/${data.clinician_id}`,
+            {
+              method: "GET",
+              credentials: "include",
+              signal: ctrl.signal,
+            }
+          );
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const clinicianData = await response.json();
+          setPatientsClinician(clinicianData.profile);
+          console.log("Fetched clinician info:", clinicianData.profile);
+        }
+        // console.log("Patient data:", data);
+      } catch (err) {
+        if (err.name !== "AbortError") setPatientError(String(err));
+      } finally {
+        setLoadingPatient(false);
+      }
+    })();
+
+    // cleanup cancels the fetch (important in StrictMode where effects run twice)
+    return () => ctrl.abort();
+  }, [user, base_URL, setPatientsClinician, setPatientInfo]);
+
+  const goals = patientInfo?.goals ?? [];
+  const { totalGoals, completedGoals, percentComplete } = useMemo(() => {
+    console.log("patientinfo", patientInfo);
+    console.log("Calculating goal progress from goals:", goals);
+
+    const total = Array.isArray(goals) ? goals.length : 0;
+
+    // A goal is “done” if completed === true OR status === 'completed'
+    const done = total
+      ? goals.filter((g) => g?.completed === true || g?.status === "completed")
+          .length
+      : 0;
+
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    return {
+      totalGoals: total,
+      completedGoals: done,
+      percentComplete: Math.min(100, Math.max(0, pct)), // clamp for safety
+    };
+  }, [goals]);
+
+  const goalProgress = useMemo(
+    () => [
+      { name: "Completed", value: percentComplete },
+      { name: "Remaining", value: 100 - percentComplete },
+    ],
+    [percentComplete]
+  );
+
+  const hasClinician = !!(
+    patientInfo?.clinician_id && patientInfo.clinician_id !== 1
+  );
+
+  // Sidebar behavior
+  const [mobileOpen, setMobileOpen] = useState(false); // small screens
+  const [collapsed, setCollapsed] = useState(false); // desktop collapse
+
+  // inside component
+  const location = useLocation();
+  const navItems = [
+    { key: "Dashboard", icon: Icons.dashboard, path: "/dashboard/patient" },
+    { key: "Goals", icon: Icons.goals, path: "/dashboard/goals" },
+    { key: "Daily Log", icon: Icons.daily, path: "/dashboard/daily-log" },
+    { key: "Medications", icon: Icons.meds, path: "/dashboard/medications" },
+    { key: "Lab Results", icon: Icons.labs, path: "/dashboard/lab-results" },
+    { key: "Meals & Nutrition", icon: Icons.meals, path: "/dashboard/meals" },
+    { key: "Inbox", icon: Icons.inbox, path: "/dashboard/inbox" },
+    {
+      key: "Account Settings",
+      icon: Icons.settings,
+      path: "/account-settings",
+    },
+    { key: "Log Out", icon: Icons.logout, path: "/logout" },
+  ];
 
   return (
+    <div className="tw-flex tw-min-h-screen tw-text-cocoa-700">
+      {/* ---- MOBILE TOP BAR (shows on <lg) ---- */}
+      <div className="tw-fixed tw-top-0 tw-left-0 tw-right-0 tw-z-30 tw-flex tw-items-center tw-justify-between tw-bg-white/80 tw-backdrop-blur tw-border-b tw-border-white/60 tw-px-4 tw-py-3 lg:tw-hidden">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-700"
+          aria-label="Open navigation menu"
+        >
+          {Icons.menu()}
+          <span className="tw-font-semibold">Menu</span>
+        </button>
+        <span className="tw-font-bold tw-text-clay-700">Pathway Planner</span>
+        <span className="tw-w-10" />
+      </div>
 
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 h-screen fixed left-0 top-0 bg-gradient-to-b from-white via-amber-50 to-rose-50 flex flex-col justify-between p-6">
-  <div className="flex flex-col space-y-6">
-    <h1 className="text-2xl font-bold text-emerald-700 tracking-tight">
-      Pathway Planner
-    </h1>
-
-    <nav>
-      <ul className="space-y-2">
-        {["Dashboard", "Goals", "Inbox", "Medications", "Lab Results", "Account Settings", "Log Out"].map(
-          (item) => (
-            <li
-              key={item}
-              className="p-2 rounded-lg text-gray-700 font-medium hover:bg-rose-100 hover:text-emerald-700 transition cursor-pointer"
+      <aside
+        className={[
+          "tw-hidden lg:tw-flex tw-h-screen tw-fixed tw-left-0 tw-top-0 tw-z-20",
+          "tw-bg-gradient-to-b tw-from-sand-50 tw-via-blush-50 tw-to-sand-100",
+          "tw-flex-col tw-justify-between tw-p-4",
+          collapsed ? "tw-w-20" : "tw-w-72",
+        ].join(" ")}
+      >
+        <div className="tw-flex tw-flex-col tw-gap-6">
+          {/* Brand + collapse */}
+          <div className="tw-flex tw-items-center tw-justify-between">
+            <h1
+              className={[
+                "tw-text-2xl tw-font-bold tw-text-clay-700 tw-tracking-tight",
+                collapsed ? "tw-sr-only" : "",
+              ].join(" ")}
             >
-              {item}
-            </li>
-          )
-        )}
-      </ul>
-    </nav>
-  </div>
-
-  <footer className="text-xs text-gray-400 mt-6">
-    © 2025 Pathway Planner
-  </footer>
-</aside>
-
-      {/* Main content area */}
-      <main className="flex-1 ml-64 p-10 bg-gradient-to-b from-rose-50 via-amber-50 to-emerald-50">
-        {/* Header */}
-        <header className="bg-rose-100 shadow-md rounded-2xl p-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <h2 className="text-2xl font-semibold text-emerald-700">
-          <p className="text-gray-600 text-lg mt-2 sm:mt-0">
-          Welcome back 
-          <p className = "text-emerald-600">{displayName}</p>
-        </p>
-        </h2>
-        
-        </header>
-
-        {/* Dashboard grid sections */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          {/* Goals */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition flex flex-col items-center justify-center">
-          <h3 className="text-lg font-semibold text-emerald-700 mb-4">Goals Progress</h3>
-
-          <PieChart width={140} height={140}>
-
-            <defs>
-              {/* Added gradient for a better looking design */}
-              <linearGradient id="goalGradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#34d399" />
-                <stop offset="100%" stopColor="#047857" />
-              </linearGradient>
-            </defs>
-
-            <Pie
-              data={goalProgress}
-              cx="50%"
-              cy="50%"
-              innerRadius={40}
-              outerRadius={60}
-              startAngle={90}
-              endAngle={450}
-              dataKey="value"
+              Pathway Planner
+            </h1>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="tw-p-2 tw-rounded-lg tw-text-clay-700 hover:tw-bg-blush-100 tw-transition"
+              title={collapsed ? "Expand" : "Collapse"}
             >
-              {/* Filling the completed as gradient and reamining as rose color */}
-              <Cell fill="url(#goalGradient)" />
-              <Cell fill="#f9caca" />
-            </Pie>
-          </PieChart>
-
-          <p className="mt-3 text-gray-700">
-            <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-emerald-700 bg-clip-text text-transparent">
-              70%
-            </span>{" "}
-            completed
-          </p>
-        </div>
-
-          {/* Inbox */}
-          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-            <h3 className="text-lg font-semibold text-emerald-700 mb-2">Inbox</h3>
-            <p className="text-gray-600">Your doctor approved the goal </p>
+              {Icons.chevron(
+                collapsed ? "tw-w-5 tw-h-5 tw-rotate-180" : "tw-w-5 tw-h-5"
+              )}
+            </button>
           </div>
 
-          {/* Meds */}
-          <div className="bg-gradient-to-br from-rose-100 via-amber-50 to-rose-200 rounded-2xl shadow-lg p-6 hover:shadow-xl transition flex flex-col items-start justify-center">
-            <h3 className="text-lg font-semibold text-emerald-800 mb-2">Medications</h3>
-            <p className="text-gray-700 mb-3">Next dose at 8:00 PM.</p>
-            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow">
+          {/* Nav */}
+          <nav aria-label="Main navigation">
+            <ul className="tw-space-y-1.5">
+              {navItems.map((item) => (
+                <li key={item.key}>
+                  <Link
+                    to={item.path}
+                    className={[
+                      "tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-transition",
+                      location.pathname === item.path
+                        ? "tw-bg-clay-600 tw-text-white"
+                        : "tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700",
+                    ].join(" ")}
+                  >
+                    {item.icon("tw-w-5 tw-h-5")}
+                    <span className={collapsed ? "tw-sr-only" : ""}>
+                      {item.key}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        <footer
+          className={collapsed ? "tw-sr-only" : "tw-text-xs tw-text-cocoa-600"}
+        >
+          © 2025 Pathway Planner
+        </footer>
+      </aside>
+
+      {/* ---- MOBILE DRAWER ---- */}
+      {mobileOpen && (
+        <div className="tw-fixed tw-inset-0 tw-z-40 lg:tw-hidden">
+          {/* overlay */}
+          <button
+            className="tw-absolute tw-inset-0 tw-bg-black/20"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation menu"
+          />
+          {/* drawer */}
+          <div className="tw-absolute tw-left-0 tw-top-0 tw-h-full tw-w-72 tw-bg-gradient-to-b tw-from-sand-50 tw-via-blush-50 tw-to-sand-100 tw-p-4 tw-shadow-xl">
+            <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
+              <h2 className="tw-text-xl tw-font-semibold tw-text-clay-700">
+                Menu
+              </h2>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="tw-p-2 tw-rounded-lg tw-text-clay-700 hover:tw-bg-blush-100"
+                aria-label="Close menu"
+              >
+                ✕
+              </button>
+            </div>
+            <nav aria-label="Mobile navigation">
+              <ul className="tw-space-y-1.5">
+                {navItems.map((item) => (
+                  <li key={item.key}>
+                    <button
+                      onClick={() => setMobileOpen(false)}
+                      className="tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700 tw-transition"
+                    >
+                      {item.icon()}
+                      <span>{item.key}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* ---- MAIN ---- */}
+      <main
+        className={[
+          "tw-flex-1 tw-min-h-screen tw-bg-fixed",
+          "tw-pt-16 lg:tw-pt-0", // account for mobile top bar
+          collapsed ? "lg:tw-ml-20" : "lg:tw-ml-72",
+          "tw-px-5 md:tw-px-8 tw-pb-10",
+        ].join(" ")}
+        style={{
+          background: "linear-gradient(180deg, #faf7f3, #f6ede7, #ecc4b1)",
+          backgroundAttachment: "fixed",
+        }}
+      >
+        {/* Decorative background blobs (soft, behind cards) */}
+        <div className="tw-pointer-events-none tw-absolute tw-inset-0 tw--z-10">
+          <div className="tw-absolute tw-top-24 tw-right-[-6rem] tw-w-[22rem] tw-h-[22rem] tw-rounded-full tw-bg-blush-200/30 tw-blur-3xl" />
+          <div className="tw-absolute tw-bottom-16 tw-left-[-4rem] tw-w-[18rem] tw-h-[18rem] tw-rounded-full tw-bg-sand-100/40 tw-blur-3xl" />
+        </div>
+
+        {/* Header row: Welcome + Clinician */}
+        <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
+          {/* Welcome */}
+          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-clay-200/80 tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
+            <div>
+              <h2 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
+                Welcome
+              </h2>
+              <p className="tw-mt-1 tw-text-xl tw-font-semibold tw-text-clay-700 tw-tracking-wide">
+                {displayName}
+              </p>
+            </div>
+            {/* Daily log quick action */}
+          </header>
+
+          {/* Clinician */}
+          <section className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+              Your Clinician
+            </h3>
+            {hasClinician ? (
+              <div>
+                <div className="tw-font-medium">
+                  Dr. {patientsClinician?.full_name}
+                </div>
+                <div className="tw-text-sm">{patientsClinician?.specialty}</div>
+                <div className="tw-text-sm tw-mt-1">
+                  email: {patientsClinician?.contact_email}
+                </div>
+                <div className="tw-text-sm tw-mt-1">
+                  Phone: {patientsClinician?.contact_phone}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="tw-mb-3">
+                  No clinician is linked to your account yet.
+                </p>
+                <button
+                  onClick={() => setIsAddClinicanModal(true)}
+                  className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+                >
+                  Add Clinician
+                </button>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Content */}
+        <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
+          {/* Goals progress — glass & floating */}
+          <div className="tw-rounded-[24px] tw-bg-white/60 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
+            {/* floating badge */}
+            <span className="tw-absolute tw--top-3 tw-left-6 tw-bg-white/80 tw-backdrop-blur tw-text-clay-700 tw-text-xs tw-px-3 tw-py-1 tw-rounded-full tw-shadow">
+              Progress
+            </span>
+
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-4">
+              Goals Progress
+            </h3>
+
+            <PieChart width={170} height={170}>
+              <defs>
+                <linearGradient id="goalGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop
+                    offset="0%"
+                    stopColor={PIE_COLORS.completedGradientStart}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={PIE_COLORS.completedGradientEnd}
+                  />
+                </linearGradient>
+              </defs>
+              <Pie
+                data={goalProgress}
+                cx="50%"
+                cy="50%"
+                innerRadius={52}
+                outerRadius={74}
+                startAngle={90}
+                endAngle={450}
+                dataKey="value"
+                stroke="none"
+              >
+                <Cell fill="url(#goalGradient)" />
+                <Cell fill={PIE_COLORS.remaining} />
+              </Pie>
+            </PieChart>
+
+            {/* Percent + counts */}
+            <p className="tw-mt-3 tw-text-center">
+              <span className="tw-text-2xl tw-font-bold tw-text-clay-700">
+                {percentComplete}%
+              </span>{" "}
+              completed
+            </p>
+            <p className="tw-text-sm tw-mt-1 tw-text-cocoa-700">
+              {completedGoals}/{totalGoals} goals
+            </p>
+
+            {/* Friendly empty state */}
+            {totalGoals === 0 && (
+              <p className="tw-mt-2 tw-text-xs tw-text-cocoa-600">
+                No goals yet — add one to get started.
+              </p>
+            )}
+          </div>
+
+          {/* Inbox — clean card */}
+          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+              Inbox
+            </h3>
+            <p>Your doctor approved the goal.</p>
+          </div>
+
+          {/* Medications — soft gradient chip style */}
+          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+            <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
+              <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+                Medications
+              </h3>
+              <span className="tw-text-xs tw-bg-white/70 tw-backdrop-blur tw-text-clay-700 tw-px-2.5 tw-py-1 tw-rounded-full">
+                Next:
+              </span>
+            </div>
+            <p className="tw-mt-2 tw-mb-3">Stay on track with your schedule.</p>
+            <button className="tw-self-start tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
               View Schedule
             </button>
           </div>
 
-
-          {/* Lab Results */}
-          <div className="bg-gradient-to-br from-rose-100 via-amber-50 to-rose-200 rounded-2xl shadow-lg p-6 hover:shadow-xl transition flex flex-col items-start justify-center">
-            <h3 className="text-lg font-semibold text-emerald-800 mb-2">Lab Results</h3>
-            <p className="text-gray-700 mb-3">New Lab result is available.</p>
-            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow">
+          {/* Lab Results — gradient w/ CTA */}
+          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+              Lab Results
+            </h3>
+            <p className="tw-mb-3">labresult head </p>
+            <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
               View Lab Record
             </button>
           </div>
 
+          {/* Suggested Goals (AI) — list chips */}
+          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
+              Suggested Goals (AI)
+            </h3>
+
+            {patientInfo?.aiSuggestions?.length > 0 ? (
+              <ul className="tw-flex tw-flex-wrap tw-gap-2">
+                {patientInfo.aiSuggestions.map((s) => (
+                  <li
+                    key={s.id}
+                    className="tw-text-sm tw-bg-blush-100 tw-text-clay-700 tw-px-3 tw-py-2 tw-rounded-full"
+                  >
+                    {s.text}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="tw-text-cocoa-700">No suggestions yet.</p>
+            )}
+
+            <div className="tw-mt-4">
+              <button
+                className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+                onClick={() => navigate("/dashboard/goals")}
+              >
+                Review in Goals
+              </button>
+            </div>
+          </div>
+
+          {/* Daily Log — simple card */}
+          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+              Daily Log
+            </h3>
+            <p className="tw-mb-3">Track symptoms, mood, meals, and vitals.</p>
+            <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
+              Open Daily Log
+            </button>
+          </div>
         </section>
       </main>
+      {isAddClinicanModal && (
+        <AddClinicianModal
+          patientId={patientInfo?.id}
+          setIsAddClinicanModal={setIsAddClinicanModal}
+          setPatientInfo={setPatientInfo}
+          setPatientsClinician={setPatientsClinician}
+        />
+      )}
     </div>
   );
 }

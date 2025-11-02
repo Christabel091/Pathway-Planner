@@ -69,11 +69,11 @@ export default function CaretakerOnboarding() {
       // success: update auth context if user object is returned (mirrors clinician flow)
       if (data.user) setUser(data.user);
 
-      // redirect home
+      // redirect dashbaord
 
       setModalType("success");
       setModalMessage("Profile completed successfully! Redirecting...");
-      navigate("/home", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Caretaker submit error:", err);
       setModalType("error");
@@ -82,57 +82,57 @@ export default function CaretakerOnboarding() {
   }
 
   return (
-  <div className="onboarding-bg">
-    <div className="ob-wrap">
-      <h1 className="ob-title">Caretaker Onboarding</h1>
+    <div className="onboarding-bg">
+      <div className="ob-wrap">
+        <h1 className="ob-title">Caretaker Onboarding</h1>
 
-      <form className="ob-form" onSubmit={onSubmit}>
-        <div className="ob-card">
-          <h3>Profile</h3>
+        <form className="ob-form" onSubmit={onSubmit}>
+          <div className="ob-card">
+            <h3>Profile</h3>
 
-          <label>
-            Full Name
-            <input
-              name="full_name"
-              value={form.full_name}
-              onChange={onChange}
-              required
-            />
-          </label>
+            <label>
+              Full Name
+              <input
+                name="full_name"
+                value={form.full_name}
+                onChange={onChange}
+                required
+              />
+            </label>
 
-          <label>
-            Relationship (e.g., mother, friend)
-            <input
-              name="relationship"
-              value={form.relationship}
-              onChange={onChange}
-            />
-          </label>
+            <label>
+              Relationship (e.g., mother, friend)
+              <input
+                name="relationship"
+                value={form.relationship}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            Phone Number
-            <input
-              name="phone_number"
-              value={form.phone_number}
-              onChange={onChange}
-            />
-          </label>
-        </div>
+            <label>
+              Phone Number
+              <input
+                name="phone_number"
+                value={form.phone_number}
+                onChange={onChange}
+              />
+            </label>
+          </div>
 
-        <button className="ob-btn" type="submit">
-          Continue
-        </button>
-      </form>
+          <button className="ob-btn" type="submit">
+            Continue
+          </button>
+        </form>
 
-      {modalMessage && (
-        <Modal
-          message={modalMessage}
-          type={modalType}
-          duration={7000}
-          onClose={() => setModalMessage("")}
-        />
-      )}
+        {modalMessage && (
+          <Modal
+            message={modalMessage}
+            type={modalType}
+            duration={7000}
+            onClose={() => setModalMessage("")}
+          />
+        )}
+      </div>
     </div>
-  </div>
   );
 }

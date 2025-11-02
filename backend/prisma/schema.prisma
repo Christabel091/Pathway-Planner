@@ -338,8 +338,8 @@ enum Gender {
 
 enum GoalStatus {
   active
-  paused
   completed
+  pending_approval
   cancelled
 }
 

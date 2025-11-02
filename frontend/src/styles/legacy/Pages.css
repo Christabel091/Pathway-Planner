@@ -12,14 +12,10 @@
   color: #3c2f2f;
 }
 
-
 :root {
   --text: #2e3a3f;
   --accent: #4db6ac;
 }
-
-
-
 
 .page {
   min-height: 100vh;

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import "../styles/tailwind/dashboard.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../components/AuthContext";   // ✅ added
+import { useAuth } from "../components/AuthContext";
 
 export default function RoleBasedDashboard() {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ export default function RoleBasedDashboard() {
       case "patient":
         navigate("/dashboard/patient", { replace: true });
         break;
-      case "clinician":
+      case "physician":
         navigate("/dashboard/clinician", { replace: true });
         break;
       case "caretaker":

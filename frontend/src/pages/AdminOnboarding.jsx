@@ -59,7 +59,7 @@ export default function AdminOnboarding() {
 
       setModalType("success");
       setModalMessage("Profile completed successfully! Redirecting...");
-      navigate("/home", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Admin submit error:", err);
 
@@ -69,47 +69,47 @@ export default function AdminOnboarding() {
   }
 
   return (
-  <div className="onboarding-bg">
-    <div className="ob-wrap">
-      <h1 className="ob-title">Admin Onboarding</h1>
+    <div className="onboarding-bg">
+      <div className="ob-wrap">
+        <h1 className="ob-title">Admin Onboarding</h1>
 
-      <form className="ob-form" onSubmit={onSubmit}>
-        <div className="ob-card">
-          <h3>Optional Details</h3>
-          <label>
-            Display Name
-            <input
-              name="display_name"
-              value={form.display_name}
-              onChange={onChange}
-            />
-          </label>
+        <form className="ob-form" onSubmit={onSubmit}>
+          <div className="ob-card">
+            <h3>Optional Details</h3>
+            <label>
+              Display Name
+              <input
+                name="display_name"
+                value={form.display_name}
+                onChange={onChange}
+              />
+            </label>
 
-          <label>
-            Contact Email
-            <input
-              type="email"
-              name="contact_email"
-              value={form.contact_email}
-              onChange={onChange}
-            />
-          </label>
-        </div>
+            <label>
+              Contact Email
+              <input
+                type="email"
+                name="contact_email"
+                value={form.contact_email}
+                onChange={onChange}
+              />
+            </label>
+          </div>
 
-        <button className="ob-btn" type="submit">
-          Finish
-        </button>
-      </form>
+          <button className="ob-btn" type="submit">
+            Finish
+          </button>
+        </form>
 
-      {modalMessage && (
-        <Modal
-          message={modalMessage}
-          type={modalType}
-          duration={7000}
-          onClose={() => setModalMessage("")}
-        />
-      )}
-    </div>
+        {modalMessage && (
+          <Modal
+            message={modalMessage}
+            type={modalType}
+            duration={7000}
+            onClose={() => setModalMessage("")}
+          />
+        )}
+      </div>
     </div>
   );
 }
