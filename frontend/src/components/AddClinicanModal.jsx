@@ -11,7 +11,7 @@ const AddClinicianModal = ({
   patientId,
   setIsAddClinicanModal,
   setPatientInfo,
-  etPatientsClinician,
+  setPatientsClinician,
 }) => {
   const base_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -93,8 +93,8 @@ const AddClinicianModal = ({
         }
       );
       const clinicianData = await clinicianRes.json();
-      console.log("Clinician data:", clinicianData);
-      if (clinicianRes.ok) etPatientsClinician(clinicianData);
+      console.log("Clinician data:", clinicianData.profile);
+      if (clinicianRes.ok) setPatientsClinician(clinicianData.profile);
 
       // Close the modal shortly after success, or immediately:
       setIsAddClinicanModal(false);
