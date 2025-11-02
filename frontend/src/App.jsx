@@ -1,7 +1,6 @@
 import Welcome from "./pages/Welcome";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
-import Home from "./pages/Home";
 import Navbar from "./pages/navbar";
 import Intro from "./pages/Intro";
 import About from "./pages/About";
@@ -11,23 +10,22 @@ import PatientOnboarding from "./pages/PatientOnboarding";
 import ClinicianOnboarding from "./pages/ClinicianOnboarding";
 import CaretakerOnboarding from "./pages/CaretakerOnboarding";
 import AdminOnboarding from "./pages/AdminOnboarding";
-import RoleBasedDashboard from "./pages/RoleBasedDashboard"; 
+import RoleBasedDashboard from "./pages/RoleBasedDashboard";
 import PatientDashboard from "./pages/dashboard/PatientDashboard";
 import ClinicianDashboard from "./pages/dashboard/ClinicianDashboard";
 import CaretakerDashboard from "./pages/dashboard/CaretakerDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
-
-
-
+import MealsPage from "./pages/Patients/MealsPage";
+import LabsPage from "./pages/Patients/LabsPage";
+import MedicationsPage from "./pages/Patients/MedicationsPage";
+import Account from "./pages/Patients/Account";
+import DailyLogsPage from "./pages/Patients/DailyLogsPage";
+import InboxPage from "./pages/Patients/InboxPage";
+import GoalsPage from "./pages/Patients/GoalsPage";
+import Logout from "./pages/Logout";
 
 import { useState } from "react";
-import {
-  Routes,
-  Route,
-  Navigate,
-  Outlet,
-  useLocation,
-} from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/AuthContext";
 // ——— Guards ———
 function RequireAuth() {
@@ -45,7 +43,6 @@ function RequireProfileComplete() {
 function BlockIfProfileComplete() {
   const { profileCompleted, loading } = useAuth();
   if (loading) return null;
-  // ✅ redirect to /dashboard instead of /home
   return profileCompleted ? <Navigate to="/dashboard" replace /> : <Outlet />;
 }
 
@@ -54,7 +51,6 @@ function PublicRedirect() {
   if (loading) return null;
   if (!isAuthed) return <Outlet />; // let unauthenticated users see public pages
 
-  // ✅ redirect authenticated users correctly
   return profileCompleted ? (
     <Navigate to="/dashboard" replace />
   ) : (
@@ -62,9 +58,9 @@ function PublicRedirect() {
   );
 }
 
-
 function AppRoutes() {
   const { user } = useAuth();
+  const [patientInfo, setPatientInfo] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
 
   return (
@@ -103,7 +99,12 @@ function AppRoutes() {
           {/* Explicit role routes (so redirects have targets) */}
           <Route
             path="/onboarding/patient"
-            element={<PatientOnboarding setUserProfile={setUserProfile} />}
+            element={
+              <PatientOnboarding
+                setUserProfile={setUserProfile}
+                userProfile={userProfile}
+              />
+            }
           />
           <Route
             path="/onboarding/clinician"
@@ -123,17 +124,42 @@ function AppRoutes() {
       {/* Fully authed + profile complete */}
       <Route element={<RequireAuth />}>
         <Route element={<RequireProfileComplete />}>
-            <Route path="/dashboard">
-            <Route index element={<RoleBasedDashboard />} /> {/* exact match for /dashboard */}
-            <Route path="patient" element={<PatientDashboard />} />
+          <Route path="/dashboard">
+            <Route index element={<RoleBasedDashboard />} />
+            {""}
+            {/* exact match for /dashboard */}
+            <Route
+              path="patient"
+              element={
+                <PatientDashboard
+                  patientInfo={patientInfo}
+                  setPatientInfo={setPatientInfo}
+                />
+              }
+            />
             <Route path="clinician" element={<ClinicianDashboard />} />
             <Route path="caretaker" element={<CaretakerDashboard />} />
             <Route path="admin" element={<AdminDashboard />} />
+            <Route
+              path="goals"
+              element={
+                <GoalsPage
+                  patientInfo={patientInfo}
+                  setPatientInfo={setPatientInfo}
+                />
+              }
+            />
+            <Route path="daily-log" element={<DailyLogsPage />} />
+            <Route path="medications" element={<MedicationsPage />} />
+            <Route path="lab-results" element={<LabsPage />} />
+            <Route path="meals" element={<MealsPage />} />
+            <Route path="inbox" element={<InboxPage />} />
+            <Route path="account-settings" element={<Account />} />
           </Route>
-            
         </Route>
       </Route>
 
+      <Route path="/logout" element={<Logout />} />
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/Welcome" replace />} />
     </Routes>
@@ -144,16 +170,24 @@ function Layout() {
   const location = useLocation();
   // Hide navbar on the splash pages if you want (optional)
   const hideNavOn = new Set([
-    "/", 
-    "/Welcome", 
-    "/Login", 
+    "/",
+    "/Welcome",
+    "/Login",
     "/SignUp",
     "/dashboard", //hidden when dashboard is open as well
     "/dashboard/caretaker",
     "/dashboard/patient",
     "/dashboard/clinician",
-    "/dashboard/admin",]);
-    
+    "/dashboard/admin",
+    "/dashboard/goals",
+    "/dashboard/daily-log",
+    "/dashboard/medications",
+    "/dashboard/lab-results",
+    "/dashboard/meals",
+    "/dashboard/inbox",
+    "/dashboard/account-settings",
+  ]);
+
   return (
     <>
       {!hideNavOn.has(location.pathname) && <Navbar />}
@@ -162,13 +196,10 @@ function Layout() {
   );
 }
 
-
-
-
 function App() {
   return (
     <AuthProvider>
-        <Layout />
+      <Layout />
     </AuthProvider>
   );
 }

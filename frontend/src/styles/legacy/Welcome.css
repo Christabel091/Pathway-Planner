@@ -9,7 +9,7 @@
   padding-top: 100px;
   color: #3c2f2f;
   background-repeat: no-repeat;
-background-size: cover;
+  background-size: cover;
 }
 
 /* Centered container */
@@ -21,7 +21,7 @@ background-size: cover;
   box-shadow: 10px 4px 14px rgba(0, 0, 0, 0.06);
   padding: 100px 80px;
   width: 90%;
-  max-width: 380px;
+  max-width: 480px;
   transition: transform 0.9s ease;
   opacity: 0;
   transform: translateX(40px);

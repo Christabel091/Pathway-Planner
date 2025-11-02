@@ -4,8 +4,6 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "../src/components/AuthContext";
 import App from "./App.jsx";
-import "./styles/tailwind/App.css";
-
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

@@ -1,6 +1,7 @@
 /** @format */
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import "../styles/legacy/Pages.css";
 import "../styles/legacy/intro.css";
 
 export default function Intro() {
@@ -52,23 +53,35 @@ export default function Intro() {
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={`intro-screen ${leaving ? "leaving" : ""}`}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? proceed() : null)}
-      aria-label="Welcome screen. Tap or swipe to continue."
-    >
-      <main className="intro-card" aria-labelledby="app-title">
-        <p className="eyebrow delayed-intro">Welcome to</p>
-        <h1 id="app-title" className="intro-title">Pathway Planner</h1>
-        <p className="intro-tag">Gentle goals, lasting care</p>
+    <div className="pages-bg">
+      <div
+        ref={rootRef}
+        className={`intro-screen ${leaving ? "leaving" : ""}`}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) =>
+          e.key === "Enter" || e.key === " " ? proceed() : null
+        }
+        aria-label="Welcome screen. Tap or swipe to continue."
+      >
+        <main className="intro-card" aria-labelledby="app-title">
+          <p className="eyebrow delayed-intro">Welcome to</p>
+          <h1 id="app-title" className="intro-title">
+            Pathway Planner
+          </h1>
+          <p className="intro-tag">Gentle goals, lasting care</p>
 
-        <button className="arrow-next" onClick={proceed} aria-label="Continue to next page">
-          <span className="arrow" aria-hidden>→</span>
-        </button>
-      </main>
+          <button
+            className="arrow-next"
+            onClick={proceed}
+            aria-label="Continue to next page"
+          >
+            <span className="arrow" aria-hidden>
+              →
+            </span>
+          </button>
+        </main>
+      </div>
     </div>
   );
 }
