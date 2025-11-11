@@ -3,16 +3,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
 import { Link, useLocation } from "react-router-dom";
+import ClinicianLabUpload from "../Clinicians/ClinicianLabUpload";
 import { PieChart, Pie, Cell } from "recharts";
 
-/* Ring colors aligned to theme */
 const PIE_COLORS = {
   completedGradientStart: "#aa7b4fff",
   completedGradientEnd: "#754829ff",
   remaining: "#dcb2a1ff",
 };
 
-/* Simple inline icons (no deps) */
 const Icons = {
   menu: (cls = "tw-w-6 tw-h-6") => (
     <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -79,56 +78,90 @@ const Icons = {
 export default function ClinicianDashboard() {
   const { user } = useAuth();
   const displayName = user?.username || "Clinician";
+  const base_URL = import.meta.env.VITE_BACKEND_URL;
 
-  /* ---------- Local state (front-end only; add your API where noted) ---------- */
+  const [showUpload, setShowUpload] = useState(false);
+  const [prefillPatientId, setPrefillPatientId] = useState("");
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  const [inviteCode, setInviteCode] = useState("PP-7H2K-93Q"); // TODO: GET /clinicians/:id -> invite_code
-  const [patients, setPatients] = useState([]); // TODO: GET /clinicians/:id/patients
-  const [approvals, setApprovals] = useState([]); // TODO: GET /clinicians/:id/approvals (pending goals)
+  const [clinicianId, setClinicianId] = useState(null);
+  const [inviteCode, setInviteCode] = useState("—");
+  const [patients, setPatients] = useState([]);
+  const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
-    // TODO: Fetch real data for clinician
-    setPatients([
-      {
-        id: 5,
-        name: "Christabel Obi-Nwosu",
-        last_update: "Today",
-        alerts: 1,
-        goals_completed_pct: 45,
-      },
-      {
-        id: 8,
-        name: "Sayuri Shrestha",
-        last_update: "Yesterday",
-        alerts: 0,
-        goals_completed_pct: 72,
-      },
-      {
-        id: 11,
-        name: "Mutlu E.N.",
-        last_update: "2d ago",
-        alerts: 2,
-        goals_completed_pct: 30,
-      },
-    ]);
-    setApprovals([
-      {
-        id: 101,
-        patient: "Christabel Obi-Nwosu",
-        title: "Hydration—6 cups daily",
-        submitted: "Today",
-      },
-      {
-        id: 102,
-        patient: "Mutlu E.N.",
-        title: "Evening breathing (10 min)",
-        submitted: "Yesterday",
-      },
-    ]);
-  }, []);
+    let alive = true;
+    if (!user?.id || !base_URL) return;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setErr("");
+
+        // 1) Resolve clinician by user id
+        const r1 = await fetch(`${base_URL}/clinicians/by-user/${user.id}`, {
+          credentials: "include",
+        });
+        if (!r1.ok) throw new Error(`resolve clinician ${r1.status}`);
+        const { clinician } = await r1.json();
+        if (!alive) return;
+
+        setClinicianId(clinician.id);
+        setInviteCode(clinician.inviteCode || "—");
+
+        // 2) Patients
+        const r2 = await fetch(
+          `${base_URL}/clinicians/${clinician.id}/patients`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!r2.ok) throw new Error(`patients ${r2.status}`);
+        const pj = await r2.json();
+        if (!alive) return;
+        setPatients(Array.isArray(pj.patients) ? pj.patients : []);
+
+        // 3) Pending approvals
+        const r3 = await fetch(
+          `${base_URL}/clinicians/${clinician.id}/approvals`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!r3.ok) throw new Error(`approvals ${r3.status}`);
+        const aj = await r3.json();
+        if (!alive) return;
+        setApprovals(Array.isArray(aj.approvals) ? aj.approvals : []);
+      } catch (e) {
+        setErr(String(e));
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [user?.id, base_URL]);
+
+  async function handleRegenerate() {
+    if (!clinicianId) return;
+    try {
+      const r = await fetch(
+        `${base_URL}/clinicians/${clinicianId}/invite/regenerate`,
+        { method: "POST", credentials: "include" }
+      );
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+      setInviteCode(j.inviteCode || "—");
+    } catch (e) {
+      setErr(String(e));
+    }
+  }
 
   const totalPatients = patients.length;
   const avgCompletion = useMemo(() => {
@@ -144,6 +177,7 @@ export default function ClinicianDashboard() {
     { name: "Remaining", value: 100 - avgCompletion },
   ];
 
+  const location = useLocation();
   const navItems = [
     { key: "Dashboard", icon: Icons.patients, path: "/dashboard/clinician" },
     {
@@ -166,9 +200,7 @@ export default function ClinicianDashboard() {
     { key: "Settings", icon: Icons.settings, path: "/account-settings" },
     { key: "Log Out", icon: Icons.logout, path: "/logout" },
   ];
-  const location = useLocation();
 
-  /* ---------- UI ---------- */
   return (
     <div className="tw-flex tw-min-h-screen tw-text-cocoa-700">
       {/* MOBILE TOP BAR */}
@@ -185,7 +217,7 @@ export default function ClinicianDashboard() {
         <span className="tw-w-10" />
       </div>
 
-      {/* SIDEBAR (desktop) */}
+      {/* SIDEBAR */}
       <aside
         className={[
           "tw-hidden lg:tw-flex tw-h-screen tw-fixed tw-left-0 tw-top-0 tw-z-20",
@@ -247,47 +279,6 @@ export default function ClinicianDashboard() {
         </footer>
       </aside>
 
-      {/* MOBILE DRAWER */}
-      {mobileOpen && (
-        <div className="tw-fixed tw-inset-0 tw-z-40 lg:tw-hidden">
-          <button
-            className="tw-absolute tw-inset-0 tw-bg-black/20"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close navigation menu"
-          />
-          <div className="tw-absolute tw-left-0 tw-top-0 tw-h-full tw-w-72 tw-bg-gradient-to-b tw-from-sand-50 tw-via-blush-50 tw-to-sand-100 tw-p-4 tw-shadow-xl">
-            <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
-              <h2 className="tw-text-xl tw-font-semibold tw-text-clay-700">
-                Menu
-              </h2>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="tw-p-2 tw-rounded-lg tw-text-clay-700 hover:tw-bg-blush-100"
-                aria-label="Close menu"
-              >
-                ✕
-              </button>
-            </div>
-            <nav aria-label="Mobile navigation">
-              <ul className="tw-space-y-1.5">
-                {navItems.map((item) => (
-                  <li key={item.key}>
-                    <Link
-                      to={item.path}
-                      onClick={() => setMobileOpen(false)}
-                      className="tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700 tw-transition"
-                    >
-                      {item.icon()}
-                      <span>{item.key}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        </div>
-      )}
-
       {/* MAIN */}
       <main
         className={[
@@ -301,7 +292,7 @@ export default function ClinicianDashboard() {
           backgroundAttachment: "fixed",
         }}
       >
-        {/* Decorative background blobs */}
+        {/* bg blobs */}
         <div className="tw-pointer-events-none tw-absolute tw-inset-0 tw--z-10">
           <div className="tw-absolute tw-top-24 tw-right-[-6rem] tw-w-[22rem] tw-h-[22rem] tw-rounded-full tw-bg-blush-200/30 tw-blur-3xl" />
           <div className="tw-absolute tw-bottom-16 tw-left-[-4rem] tw-w-[18rem] tw-h-[18rem] tw-rounded-full tw-bg-sand-100/40 tw-blur-3xl" />
@@ -309,7 +300,6 @@ export default function ClinicianDashboard() {
 
         {/* Header */}
         <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
-          {/* Welcome */}
           <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-clay-200/80 tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
             <div>
               <h2 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
@@ -324,7 +314,6 @@ export default function ClinicianDashboard() {
               </p>
             </div>
 
-            {/* Avg completion ring */}
             <div className="tw-mt-4 md:tw-mt-0 tw-flex tw-items-center tw-gap-4">
               <PieChart width={120} height={120}>
                 <defs>
@@ -365,7 +354,7 @@ export default function ClinicianDashboard() {
             </div>
           </header>
 
-          {/* Invite code / Regenerate */}
+          {/* Invite code */}
           <section className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Invite Code
@@ -377,21 +366,29 @@ export default function ClinicianDashboard() {
               <code className="tw-text-base tw-font-semibold tw-bg-white/70 tw-border tw-border-white/60 tw-rounded-xl tw-px-3 tw-py-1">
                 {inviteCode}
               </code>
-              <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-3 tw-py-2 tw-rounded-xl tw-shadow">
+              <button
+                className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-3 tw-py-2 tw-rounded-xl tw-shadow"
+                onClick={handleRegenerate}
+                disabled={!clinicianId}
+              >
                 Regenerate
               </button>
             </div>
+            {err && <p className="tw-text-xs tw-text-red-600 tw-mt-2">{err}</p>}
           </section>
         </div>
 
         {/* Content */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
-          {/* Inbox / Approvals */}
+          {/* Inbox — Pending Approvals (real) */}
           <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Inbox — Pending Approvals
             </h3>
-            {approvals.length ? (
+
+            {loading ? (
+              <p className="tw-text-sm">Loading…</p>
+            ) : approvals.length ? (
               <ul className="tw-space-y-2">
                 {approvals.map((a) => (
                   <li
@@ -403,22 +400,57 @@ export default function ClinicianDashboard() {
                         {a.title}
                       </div>
                       <div className="tw-text-xs tw-text-cocoa-600">
-                        {a.patient} • {a.submitted}
+                        {a.patient} • {new Date(a.submitted).toLocaleString()}
                       </div>
+                      <span className="tw-inline-block tw-mt-1 tw-text-[11px] tw-bg-amber-100 tw-text-amber-800 tw-px-2 tw-py-0.5 tw-rounded-full">
+                        pending
+                      </span>
                     </div>
                     <div className="tw-flex tw-gap-2">
                       <button
                         className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-600 tw-text-white hover:tw-bg-clay-700"
-                        onClick={() => {
-                          // TODO: PATCH /goals/:id -> { status: 'active' }
+                        onClick={async () => {
+                          try {
+                            const r = await fetch(
+                              `${base_URL}/patients/goals/${a.id}`,
+                              {
+                                method: "PATCH",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ status: "active" }),
+                              }
+                            );
+                            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                            setApprovals((cur) =>
+                              cur.filter((g) => g.id !== a.id)
+                            );
+                          } catch (e) {
+                            setErr(String(e));
+                          }
                         }}
                       >
                         Approve
                       </button>
                       <button
                         className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-rose-500 tw-text-white hover:tw-bg-rose-600"
-                        onClick={() => {
-                          // TODO: PATCH /goals/:id -> { status: 'rejected' }
+                        onClick={async () => {
+                          try {
+                            const r = await fetch(
+                              `${base_URL}/patients/goals/${a.id}`,
+                              {
+                                method: "PATCH",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ status: "rejected" }),
+                              }
+                            );
+                            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                            setApprovals((cur) =>
+                              cur.filter((g) => g.id !== a.id)
+                            );
+                          } catch (e) {
+                            setErr(String(e));
+                          }
                         }}
                       >
                         Reject
@@ -432,12 +464,14 @@ export default function ClinicianDashboard() {
             )}
           </div>
 
-          {/* Patients list (click-through or expand) */}
+          {/* Patients list (real) */}
           <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
               Your Patients
             </h3>
-            {patients.length ? (
+            {loading ? (
+              <p className="tw-text-sm">Loading…</p>
+            ) : patients.length ? (
               <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
                 {patients.map((p) => (
                   <div
@@ -455,10 +489,9 @@ export default function ClinicianDashboard() {
                       )}
                     </div>
                     <div className="tw-text-xs tw-text-cocoa-600">
-                      Last update: {p.last_update}
+                      Last update: {p.last_update || "—"}
                     </div>
 
-                    {/* Mini progress ring */}
                     <div className="tw-flex tw-items-center tw-gap-3 tw-mt-1">
                       <PieChart width={84} height={84}>
                         <defs>
@@ -481,10 +514,13 @@ export default function ClinicianDashboard() {
                         </defs>
                         <Pie
                           data={[
-                            { name: "Completed", value: p.goals_completed_pct },
+                            {
+                              name: "Completed",
+                              value: p.goals_completed_pct || 0,
+                            },
                             {
                               name: "Remaining",
-                              value: 100 - p.goals_completed_pct,
+                              value: 100 - (p.goals_completed_pct || 0),
                             },
                           ]}
                           cx="50%"
@@ -502,7 +538,7 @@ export default function ClinicianDashboard() {
                       </PieChart>
                       <div>
                         <div className="tw-text-lg tw-font-bold tw-text-clay-700">
-                          {p.goals_completed_pct}%
+                          {p.goals_completed_pct || 0}%
                         </div>
                         <div className="tw-text-xs tw-text-cocoa-700">
                           Goals completed
@@ -520,10 +556,11 @@ export default function ClinicianDashboard() {
                       <button
                         className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-white/80 hover:tw-bg-white"
                         onClick={() => {
-                          // TODO: quick note / contact action
+                          setPrefillPatientId(String(p.id));
+                          setShowUpload(true);
                         }}
                       >
-                        Quick Note
+                        Upload Lab
                       </button>
                     </div>
                   </div>
@@ -534,7 +571,7 @@ export default function ClinicianDashboard() {
             )}
           </div>
 
-          {/* Appointments */}
+          {/* Appointments placeholder */}
           <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
               <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
@@ -553,27 +590,76 @@ export default function ClinicianDashboard() {
                 View Calendar
               </button>
             </div>
-            {/* TODO: Integrate calendar data & reminder API */}
           </div>
 
-          {/* Lab Results */}
+          {/* Lab Results CTA */}
           <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
             </h3>
             <p className="tw-mb-3">Upload or review recent labs.</p>
             <div className="tw-flex tw-gap-2">
-              <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
+              <button
+                className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+                onClick={() => {
+                  setPrefillPatientId("");
+                  setShowUpload(true);
+                }}
+              >
                 Upload Lab
               </button>
               <button className="tw-bg-white/80 hover:tw-bg-white tw-px-4 tw-py-2 tw-rounded-xl">
                 Review
               </button>
             </div>
-            {/* TODO: Wire to /labs endpoints */}
           </div>
         </section>
       </main>
+
+      {/* Upload modal */}
+      {showUpload && (
+        <div className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center">
+          <button
+            className="tw-absolute tw-inset-0 tw-bg-black/30"
+            aria-label="Close"
+            onClick={() => setShowUpload(false)}
+          />
+          <div className="tw-relative tw-z-10 tw-w-full md:tw-w-[560px]">
+            <div className="tw-bg-white tw-rounded-2xl tw-shadow-xl tw-p-4">
+              <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+                <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700">
+                  Upload Lab Result
+                </h3>
+                <button
+                  className="tw-text-cocoa-700 tw-rounded-lg tw-p-2 hover:tw-bg-blush-100"
+                  onClick={() => setShowUpload(false)}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <ClinicianLabUploadWrapper
+                prefillPatientId={prefillPatientId}
+                onSubmitted={() => setShowUpload(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function ClinicianLabUploadWrapper({ prefillPatientId, onSubmitted }) {
+  const [key, setKey] = useState(0);
+  useEffect(() => {
+    setKey((k) => k + 1);
+  }, [prefillPatientId]);
+  return (
+    <ClinicianLabUpload
+      key={key}
+      prefillPatientId={prefillPatientId}
+      onSubmitted={onSubmitted}
+    />
   );
 }

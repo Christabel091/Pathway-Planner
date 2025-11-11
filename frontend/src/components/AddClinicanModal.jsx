@@ -1,12 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Modal from "./Modal.jsx"; // your toast/alert component
 
-/**
- * Props:
- * - patientId: number | string
- * - SetIsAddClinicianOpen: (boolean) => void   // closes this modal on success or when user clicks X
- * - setPatientInfo: (patientObj) => void       // update parent with new patient profile on success
- */
 const AddClinicianModal = ({
   patientId,
   setIsAddClinicanModal,
