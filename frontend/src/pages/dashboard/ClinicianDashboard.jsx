@@ -152,9 +152,10 @@ export default function ClinicianDashboard() {
     if (!clinicianId) return;
     try {
       const r = await fetch(
-        `${base_URL}/clinicians/${clinicianId}/invite/regenerate`,
+        `${base_URL}/regenerate/clinician/invite/${clinicianId}`,
         { method: "POST", credentials: "include" }
       );
+      console.log("response", r);
       const j = await r.json();
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
       setInviteCode(j.inviteCode || "—");

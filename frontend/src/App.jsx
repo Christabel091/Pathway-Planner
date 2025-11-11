@@ -15,7 +15,6 @@ import PatientDashboard from "./pages/dashboard/PatientDashboard";
 import ClinicianDashboard from "./pages/dashboard/ClinicianDashboard";
 import CaretakerDashboard from "./pages/dashboard/CaretakerDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
-import MealsPage from "./pages/Patients/MealsPage";
 import LabsPage from "./pages/Patients/LabsPage";
 import MedicationsPage from "./pages/Patients/MedicationsPage";
 import Account from "./pages/Patients/Account";
@@ -152,7 +151,6 @@ function AppRoutes() {
             <Route path="daily-log" element={<DailyLogsPage />} />
             <Route path="medications" element={<MedicationsPage />} />
             <Route path="lab-results" element={<LabsPage />} />
-            <Route path="meals" element={<MealsPage />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="account-settings" element={<Account />} />
           </Route>
