@@ -160,9 +160,11 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         return;
       }
       if (msg?.type === "LAB_NEW") {
-        console.log("Received new lab result via WebSocket:", msg.payload);
         const p = msg.payload || {};
         setLabAlerts((prev) => [{ ...p, ts: Date.now() }, ...prev]);
+        console.log("Sending ack for notificationId:", p);
+        //print lab alerts
+        console.log("Current lab alerts:", labAlerts);
         window.socketInstance &&
           window.socketInstance.readyState === WebSocket.OPEN &&
           window.socketInstance.send(
@@ -185,7 +187,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     return () => {
       // keeps socket running
     };
-  }, [user, user?.id]);
+  }, [labAlerts, user, user?.id]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const goals = patientInfo?.goals ?? [];
