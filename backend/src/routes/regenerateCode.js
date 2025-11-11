@@ -6,23 +6,30 @@ import generateInviteCode from "../../utils/generateCode.js";
 const prisma = new PrismaClient();
 const regenerateCodeRouter = express.Router();
 
-regenerateCodeRouter.post("/clinician/invite", async (req, res) => {
-  const { clinicianId } = req.body;
-  if (!clinicianId)
-    return res.status(400).json({ error: "Invalid clinician ID" });
+regenerateCodeRouter.post(
+  "/clinician/invite/:clinicianId",
+  async (req, res) => {
+    const { clinicianId } = req.params;
 
-  const clin = await prisma.clinician.findUnique({
-    where: { id: Number(clinicianId) },
-  });
-  if (!clin) return res.status(404).json({ error: "Clinician not found" });
+    if (!clinicianId)
+      return res.status(400).json({ error: "Invalid clinician ID" });
 
-  const newCode = generateInviteCode();
-  await prisma.clinician.update({
-    where: { id: Number(clinicianId) },
-    data: { inviteCode: newCode, inviteUpdatedAt: new Date() },
-  });
+    const clin = await prisma.clinician.findUnique({
+      where: { id: Number(clinicianId) },
+    });
+    if (!clin) return res.status(404).json({ error: "Clinician not found" });
 
-  return res.json({ message: "Invite code regenerated", inviteCode: newCode });
-});
+    const newCode = generateInviteCode();
+    await prisma.clinician.update({
+      where: { id: Number(clinicianId) },
+      data: { inviteCode: newCode, inviteUpdatedAt: new Date() },
+    });
+
+    return res.json({
+      message: "Invite code regenerated",
+      inviteCode: newCode,
+    });
+  }
+);
 
 export default regenerateCodeRouter;
