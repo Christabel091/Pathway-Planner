@@ -5,9 +5,7 @@ import { PieChart, Pie, Cell } from "recharts";
 import "../../styles/tailwind/dashboard.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AddClinicianModal from "../../components/AddClinicanModal";
-/** ---- MOCKS / SHAPES ----
- * Replace these with real data from your API once wired.
- */
+import { connectWebSocket } from "../../utility/webSocket";
 
 const PIE_COLORS = {
   completedGradientStart: "#aa7b4fff",
@@ -98,7 +96,7 @@ const Icons = {
 
 export default function PatientDashboard({ patientInfo, setPatientInfo }) {
   const { user, logout } = useAuth();
-
+  const [labAlerts, setLabAlerts] = useState([]);
   const base_URL = import.meta.env.VITE_BACKEND_URL;
   const displayName = user?.username || "Patient";
   const navigate = useNavigate();
@@ -127,7 +125,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setPatientInfo(data);
-        console.log("Fetched patient info:", data);
         //then fetch patients clinician info based on clinician_id
         if (data.clinician_id && data.clinician_id !== 1) {
           const response = await fetch(
@@ -141,9 +138,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const clinicianData = await response.json();
           setPatientsClinician(clinicianData.profile);
-          console.log("Fetched clinician info:", clinicianData.profile);
         }
-        // console.log("Patient data:", data);
       } catch (err) {
         if (err.name !== "AbortError") setPatientError(String(err));
       } finally {
@@ -155,14 +150,47 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     return () => ctrl.abort();
   }, [user, base_URL, setPatientsClinician, setPatientInfo]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    let opened = false;
+
+    const handleMsg = (msg) => {
+      if (msg?.type === "BOOTSTRAP") {
+        //unread
+        return;
+      }
+      if (msg?.type === "LAB_NEW") {
+        console.log("Received new lab result via WebSocket:", msg.payload);
+        const p = msg.payload || {};
+        setLabAlerts((prev) => [{ ...p, ts: Date.now() }, ...prev]);
+        window.socketInstance &&
+          window.socketInstance.readyState === WebSocket.OPEN &&
+          window.socketInstance.send(
+            JSON.stringify({
+              type: "notif:ack",
+              notificationId: p.notificationId,
+            })
+          );
+      }
+    };
+
+    if (
+      !window.socketInstance ||
+      window.socketInstance.readyState !== WebSocket.OPEN
+    ) {
+      connectWebSocket(user, handleMsg);
+      opened = true;
+    }
+
+    return () => {
+      // keeps socket running
+    };
+  }, [user, user?.id]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const goals = patientInfo?.goals ?? [];
   const { totalGoals, completedGoals, percentComplete } = useMemo(() => {
-    console.log("patientinfo", patientInfo);
-    console.log("Calculating goal progress from goals:", goals);
-
     const total = Array.isArray(goals) ? goals.length : 0;
-
-    // A goal is “done” if completed === true OR status === 'completed'
     const done = total
       ? goals.filter((g) => g?.completed === true || g?.status === "completed")
           .length
@@ -290,16 +318,13 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         </footer>
       </aside>
 
-      {/* ---- MOBILE DRAWER ---- */}
       {mobileOpen && (
         <div className="tw-fixed tw-inset-0 tw-z-40 lg:tw-hidden">
-          {/* overlay */}
           <button
             className="tw-absolute tw-inset-0 tw-bg-black/20"
             onClick={() => setMobileOpen(false)}
             aria-label="Close navigation menu"
           />
-          {/* drawer */}
           <div className="tw-absolute tw-left-0 tw-top-0 tw-h-full tw-w-72 tw-bg-gradient-to-b tw-from-sand-50 tw-via-blush-50 tw-to-sand-100 tw-p-4 tw-shadow-xl">
             <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
               <h2 className="tw-text-xl tw-font-semibold tw-text-clay-700">
@@ -317,13 +342,20 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               <ul className="tw-space-y-1.5">
                 {navItems.map((item) => (
                   <li key={item.key}>
-                    <button
-                      onClick={() => setMobileOpen(false)}
-                      className="tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700 tw-transition"
+                    <Link
+                      to={item.path}
+                      className={[
+                        "tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-transition",
+                        location.pathname === item.path
+                          ? "tw-bg-clay-600 tw-text-white"
+                          : "tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700",
+                      ].join(" ")}
                     >
-                      {item.icon()}
-                      <span>{item.key}</span>
-                    </button>
+                      {item.icon("tw-w-5 tw-h-5")}
+                      <span className={collapsed ? "tw-sr-only" : ""}>
+                        {item.key}
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -332,7 +364,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         </div>
       )}
 
-      {/* ---- MAIN ---- */}
       <main
         className={[
           "tw-flex-1 tw-min-h-screen tw-bg-fixed",
@@ -466,7 +497,42 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Inbox
             </h3>
-            <p>Your doctor approved the goal.</p>
+
+            {labAlerts.length === 0 ? (
+              <p>No new messages.</p>
+            ) : (
+              <ul className="tw-space-y-2">
+                {labAlerts.map((a) => (
+                  <li
+                    key={`${a.notificationId}-${a.labId}-${a.ts}`}
+                    className="tw-flex tw-items-center tw-justify-between tw-bg-blush-100 tw-text-clay-700 tw-rounded-xl tw-px-3 tw-py-2"
+                  >
+                    <span className="tw-text-sm">
+                      New lab: <strong>{a.title}</strong>{" "}
+                      {a.unit ? `(${a.unit})` : ""}
+                    </span>
+                    <Link
+                      to={`/dashboard/lab-results?open=${a.labId}`}
+                      className="tw-text-sm tw-underline"
+                      onClick={() => {
+                        if (
+                          window.socketInstance?.readyState === WebSocket.OPEN
+                        ) {
+                          window.socketInstance.send(
+                            JSON.stringify({
+                              type: "notif:ack",
+                              notificationId: a.notificationId,
+                            })
+                          );
+                        }
+                      }}
+                    >
+                      View
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Medications — soft gradient chip style */}
@@ -490,8 +556,11 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
             </h3>
-            <p className="tw-mb-3">labresult head </p>
-            <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
+            <p className="tw-mb-3">View results sent by your clinican </p>
+            <button
+              className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+              onClick={() => navigate("/dashboard/lab-results")}
+            >
               View Lab Record
             </button>
           </div>

@@ -114,4 +114,36 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
   }
 });
 
+patientRouter.get("/:userId/labs", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    // find patient by user_id
+    const patient = await prisma.patient.findUnique({
+      where: { user_id: userId },
+      select: { id: true },
+    });
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+
+    const labs = await prisma.labResult.findMany({
+      where: { patient_id: patient.id },
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        lab_type: true,
+        lab_value: true,
+        unit: true,
+        source: true,
+        file_url: true,
+        created_at: true,
+        read_at: true,
+      },
+    });
+
+    res.json({ patientId: patient.id, labs });
+  } catch (e) {
+    console.error("GET /patients/:userId/labs error", e);
+    res.status(500).json({ error: "Failed to fetch labs" });
+  }
+});
+
 export default patientRouter;
