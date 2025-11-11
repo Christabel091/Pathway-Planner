@@ -6,7 +6,7 @@ import cors from "cors";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import { PrismaClient, Prisma } from "@prisma/client";
-// index.js
+import notificationsRouter from "./routes/notifications.js";
 import cliniciansRouter from "./routes/clinicians.js";
 import authRoutes from "./routes/auth.js";
 import infoRouter from "./routes/info.js";
@@ -31,6 +31,7 @@ app.use("/onboarding", infoRouter);
 app.use("/patients", patientRouter);
 app.use("/regenerate", regenerateCodeRouter);
 app.use("/clinicians", cliniciansRouter);
+app.use("/notifications", notificationsRouter);
 
 const server = createServer(app);
 const wss = new WebSocketServer({ server });

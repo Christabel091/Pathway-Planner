@@ -103,6 +103,7 @@ model Caretaker {
 enum NotificationType {
   LAB_NEW
   GOAL_APPROVED
+  MEDICATION
   MESSAGE
 }
 
