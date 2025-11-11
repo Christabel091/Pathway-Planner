@@ -60,14 +60,6 @@ const Icons = {
       <path strokeWidth="2" d="M9 3h6" />
     </svg>
   ),
-  meals: (cls = "tw-w-5 tw-h-5") => (
-    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path
-        strokeWidth="2"
-        d="M4 3v8a2 2 0 002 2h2V3M12 3v10a4 4 0 004 4h2V3"
-      />
-    </svg>
-  ),
   inbox: (cls = "tw-w-5 tw-h-5") => (
     <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
       <path
@@ -231,12 +223,11 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     { key: "Daily Log", icon: Icons.daily, path: "/dashboard/daily-log" },
     { key: "Medications", icon: Icons.meds, path: "/dashboard/medications" },
     { key: "Lab Results", icon: Icons.labs, path: "/dashboard/lab-results" },
-    { key: "Meals & Nutrition", icon: Icons.meals, path: "/dashboard/meals" },
     { key: "Inbox", icon: Icons.inbox, path: "/dashboard/inbox" },
     {
       key: "Account Settings",
       icon: Icons.settings,
-      path: "/account-settings",
+      path: "/dashboard/account-settings",
     },
     { key: "Log Out", icon: Icons.logout, path: "/logout" },
   ];
@@ -603,7 +594,9 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Daily Log
             </h3>
-            <p className="tw-mb-3">Track symptoms, mood, meals, and vitals.</p>
+            <p className="tw-mb-3">
+              Track symptoms, mood, meals, sleep, exercise and vitals.
+            </p>
             <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
               Open Daily Log
             </button>
