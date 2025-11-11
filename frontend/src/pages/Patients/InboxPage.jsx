@@ -86,9 +86,14 @@ export default function InboxPage() {
 
   return (
     <div className="tw-max-w-3xl tw-mx-auto tw-px-4 tw-py-6">
-      <h1 className="tw-text-2xl tw-font-semibold tw-text-clay-700 tw-mb-3">
-        Inbox
-      </h1>
+      <header className="tw-flex tw-items-center tw-justify-between tw-mb-6">
+        <h1 className="tw-text-2xl tw-font-semibold tw-text-clay-700 tw-mb-3">
+          Inbox
+        </h1>
+        <Link to="/dashboard/patient" className="tw-text-sm tw-underline">
+          Back to Dashboard
+        </Link>
+      </header>
       <p className="tw-text-sm tw-text-cocoa-700 tw-mb-4">
         All notifications from your clinician and system.
       </p>
