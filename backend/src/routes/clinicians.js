@@ -133,6 +133,7 @@ router.get("/:clinicianId/approvals", async (req, res) => {
     id: g.id,
     patient: g.patient.full_name,
     title: g.title,
+    description: g.description,
     submitted: g.created_at, // format on client
   }));
 

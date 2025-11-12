@@ -49,18 +49,6 @@ const Icons = {
       <path strokeWidth="2" d="M9 3h6" />
     </svg>
   ),
-  calendar: (cls = "tw-w-5 tw-h-5") => (
-    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
-      <path strokeWidth="2" d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  ),
-  key: (cls = "tw-w-5 tw-h-5") => (
-    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <circle cx="7" cy="12" r="3" strokeWidth="2" />
-      <path strokeWidth="2" d="M10 12h10l-2 2 2 2-2 2" />
-    </svg>
-  ),
   settings: (cls = "tw-w-5 tw-h-5") => (
     <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
       <path strokeWidth="2" d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
@@ -135,6 +123,7 @@ export default function ClinicianDashboard() {
         if (!r3.ok) throw new Error(`approvals ${r3.status}`);
         const aj = await r3.json();
         if (!alive) return;
+        console.log("approvals", aj.approvals);
         setApprovals(Array.isArray(aj.approvals) ? aj.approvals : []);
       } catch (e) {
         setErr(String(e));
@@ -187,17 +176,7 @@ export default function ClinicianDashboard() {
       path: "/dashboard/clinician/patients",
     },
     { key: "Inbox", icon: Icons.inbox, path: "/dashboard/clinician/inbox" },
-    {
-      key: "Appointments",
-      icon: Icons.calendar,
-      path: "/dashboard/clinician/appointments",
-    },
     { key: "Lab Results", icon: Icons.labs, path: "/dashboard/clinician/labs" },
-    {
-      key: "Invite / Code",
-      icon: Icons.key,
-      path: "/dashboard/clinician/invite",
-    },
     { key: "Settings", icon: Icons.settings, path: "/account-settings" },
     { key: "Log Out", icon: Icons.logout, path: "/logout" },
   ];
@@ -400,6 +379,7 @@ export default function ClinicianDashboard() {
                       <div className="tw-text-sm tw-font-semibold tw-text-clay-700">
                         {a.title}
                       </div>
+                      <div className="">{a.description}</div>
                       <div className="tw-text-xs tw-text-cocoa-600">
                         {a.patient} • {new Date(a.submitted).toLocaleString()}
                       </div>
@@ -489,9 +469,6 @@ export default function ClinicianDashboard() {
                         </span>
                       )}
                     </div>
-                    <div className="tw-text-xs tw-text-cocoa-600">
-                      Last update: {p.last_update || "—"}
-                    </div>
 
                     <div className="tw-flex tw-items-center tw-gap-3 tw-mt-1">
                       <PieChart width={84} height={84}>
@@ -570,27 +547,6 @@ export default function ClinicianDashboard() {
             ) : (
               <p className="tw-text-sm tw-text-cocoa-700">No patients yet.</p>
             )}
-          </div>
-
-          {/* Appointments placeholder */}
-          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
-            <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
-              <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
-                Appointments
-              </h3>
-              <span className="tw-text-xs tw-bg-white/70 tw-backdrop-blur tw-text-clay-700 tw-px-2.5 tw-py-1 tw-rounded-full">
-                Today: 2
-              </span>
-            </div>
-            <p className="tw-mt-2 tw-mb-3">Send reminders, mark attendance.</p>
-            <div className="tw-flex tw-gap-2">
-              <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
-                Send Reminder
-              </button>
-              <button className="tw-bg-white/80 hover:tw-bg-white tw-px-4 tw-py-2 tw-rounded-xl">
-                View Calendar
-              </button>
-            </div>
           </div>
 
           {/* Lab Results CTA */}
