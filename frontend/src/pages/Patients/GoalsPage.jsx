@@ -384,7 +384,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
           body: JSON.stringify({
             title: s.text,
             description: "AI-suggested goal",
-            status: "active",
+            status: "pending_approval",
           }),
         }
       );
