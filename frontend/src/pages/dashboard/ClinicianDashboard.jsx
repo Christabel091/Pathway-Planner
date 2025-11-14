@@ -5,6 +5,7 @@ import { useAuth } from "../../components/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import ClinicianLabUpload from "../Clinicians/ClinicianLabUpload";
 import { PieChart, Pie, Cell } from "recharts";
+import { connectWebSocket } from "../../utility/webSocket"; // <--- ADDED
 
 const PIE_COLORS = {
   completedGradientStart: "#aa7b4fff",
@@ -80,6 +81,8 @@ export default function ClinicianDashboard() {
   const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+
+  const [alerts, setAlerts] = useState([]); // <--- NEW: announcements for inbox
 
   useEffect(() => {
     let alive = true;
@@ -167,6 +170,65 @@ export default function ClinicianDashboard() {
     { name: "Remaining", value: 100 - avgCompletion },
   ];
 
+  // --- NEW: WebSocket for ANNOUNCEMENT -> alerts state ---
+  const ackNotification = (notificationId) => {
+    if (
+      notificationId &&
+      window.socketInstance?.readyState === WebSocket.OPEN
+    ) {
+      window.socketInstance.send(
+        JSON.stringify({
+          type: "notif:ack",
+          notificationId,
+        })
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleMsg = (msg) => {
+      if (msg?.type === "BOOTSTRAP") return;
+
+      if (msg?.type === "ANNOUNCEMENT") {
+        const p = msg.payload || {};
+        setAlerts((prev) => [
+          {
+            notificationId: p.notificationId,
+            title: p.title,
+            message: p.message,
+            created_at: p.created_at,
+            ts: Date.now(),
+          },
+          ...prev,
+        ]);
+        ackNotification(p.notificationId);
+      }
+    };
+
+    if (
+      !window.socketInstance ||
+      window.socketInstance.readyState !== WebSocket.OPEN
+    ) {
+      connectWebSocket(user, handleMsg);
+    } else {
+      // if socket already open, just add listener
+      const ws = window.socketInstance;
+      const onMessage = (ev) => {
+        let parsed;
+        try {
+          parsed = JSON.parse(ev.data);
+        } catch {
+          return;
+        }
+        handleMsg(parsed);
+      };
+      ws.addEventListener("message", onMessage);
+      return () => ws.removeEventListener("message", onMessage);
+    }
+  }, [user, user?.id]);
+
   const location = useLocation();
   const navItems = [
     { key: "Dashboard", icon: Icons.patients, path: "/dashboard/clinician" },
@@ -180,6 +242,8 @@ export default function ClinicianDashboard() {
     { key: "Settings", icon: Icons.settings, path: "/account-settings" },
     { key: "Log Out", icon: Icons.logout, path: "/logout" },
   ];
+
+  const hasInboxItems = approvals.length > 0 || alerts.length > 0;
 
   return (
     <div className="tw-flex tw-min-h-screen tw-text-cocoa-700">
@@ -360,26 +424,32 @@ export default function ClinicianDashboard() {
 
         {/* Content */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
-          {/* Inbox — Pending Approvals (real) */}
+          {/* Inbox — Pending goals + announcements */}
           <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
-              Inbox — Pending Approvals
+              Inbox
             </h3>
 
             {loading ? (
               <p className="tw-text-sm">Loading…</p>
-            ) : approvals.length ? (
+            ) : !hasInboxItems ? (
+              <p className="tw-text-sm tw-text-cocoa-700">No items waiting.</p>
+            ) : (
               <ul className="tw-space-y-2">
+                {/* Pending goals */}
                 {approvals.map((a) => (
                   <li
-                    key={a.id}
+                    key={`approval-${a.id}`}
                     className="tw-rounded-xl tw-bg-white/70 tw-border tw-border-white/60 tw-p-3 tw-flex tw-items-center tw-justify-between"
                   >
                     <div>
+                      <div className="tw-text-[11px] tw-uppercase tw-font-semibold tw-text-amber-800 tw-mb-0.5">
+                        Pending goal
+                      </div>
                       <div className="tw-text-sm tw-font-semibold tw-text-clay-700">
                         {a.title}
                       </div>
-                      <div className="">{a.description}</div>
+                      <div className="tw-text-sm">{a.description}</div>
                       <div className="tw-text-xs tw-text-cocoa-600">
                         {a.patient} • {new Date(a.submitted).toLocaleString()}
                       </div>
@@ -439,9 +509,39 @@ export default function ClinicianDashboard() {
                     </div>
                   </li>
                 ))}
+
+                {/* Announcements */}
+                {alerts.map((a) => (
+                  <li
+                    key={`announcement-${a.notificationId}-${a.ts}`}
+                    className="tw-rounded-xl tw-bg-blush-100 tw-text-clay-700 tw-p-3 tw-flex tw-items-center tw-justify-between"
+                  >
+                    <div className="tw-flex-1 tw-pr-2">
+                      <div className="tw-text-[11px] tw-uppercase tw-font-semibold tw-text-clay-700 tw-mb-0.5">
+                        Announcement
+                      </div>
+                      <div className="tw-text-sm tw-font-semibold">
+                        {a.title}
+                      </div>
+                      {a.message && (
+                        <div className="tw-text-sm tw-mt-0.5">{a.message}</div>
+                      )}
+                      <div className="tw-text-xs tw-text-cocoa-600 tw-mt-1">
+                        {a.created_at
+                          ? new Date(a.created_at).toLocaleString()
+                          : ""}
+                      </div>
+                    </div>
+                    <Link
+                      to="/dashboard/clinician/inbox"
+                      className="tw-text-xs tw-underline"
+                      onClick={() => ackNotification(a.notificationId)}
+                    >
+                      Open
+                    </Link>
+                  </li>
+                ))}
               </ul>
-            ) : (
-              <p className="tw-text-sm tw-text-cocoa-700">No items waiting.</p>
             )}
           </div>
 

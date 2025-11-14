@@ -20,6 +20,11 @@ router.post("/signup", async (req, res) => {
   if (!email || !username || !password) {
     return res.status(400).json({ error: "Please enter your information" });
   }
+  if (password.length < 8) {
+    return res
+      .status(401)
+      .json({ error: "Password must be at least 8 characters long." });
+  }
 
   // Server-side hashing is correct (keep it here)
   const hashedPassword = await bcrypt.hash(password, 10);

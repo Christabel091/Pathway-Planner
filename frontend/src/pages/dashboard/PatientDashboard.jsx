@@ -111,7 +111,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           method: "GET",
           credentials: "include",
           signal: ctrl.signal,
-          // headers not required for GET, but harmless if you keep them
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -138,9 +137,23 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
       }
     })();
 
-    // cleanup cancels the fetch (important in StrictMode where effects run twice)
     return () => ctrl.abort();
   }, [user, base_URL, setPatientsClinician, setPatientInfo]);
+
+  // helper to ack notifications over WS
+  const ackNotification = (notificationId) => {
+    if (
+      notificationId &&
+      window.socketInstance?.readyState === WebSocket.OPEN
+    ) {
+      window.socketInstance.send(
+        JSON.stringify({
+          type: "notif:ack",
+          notificationId,
+        })
+      );
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -148,23 +161,42 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
 
     const handleMsg = (msg) => {
       if (msg?.type === "BOOTSTRAP") {
-        //unread
         return;
       }
+
       if (msg?.type === "LAB_NEW") {
         const p = msg.payload || {};
-        setLabAlerts((prev) => [{ ...p, ts: Date.now() }, ...prev]);
+        setLabAlerts((prev) => [
+          {
+            kind: "lab",
+            notificationId: p.notificationId,
+            labId: p.labId,
+            title: p.title,
+            unit: p.unit ?? null,
+            ts: Date.now(),
+          },
+          ...prev,
+        ]);
         console.log("Sending ack for notificationId:", p);
-        //print lab alerts
         console.log("Current lab alerts:", labAlerts);
-        window.socketInstance &&
-          window.socketInstance.readyState === WebSocket.OPEN &&
-          window.socketInstance.send(
-            JSON.stringify({
-              type: "notif:ack",
-              notificationId: p.notificationId,
-            })
-          );
+        ackNotification(p.notificationId);
+        return;
+      }
+
+      if (msg?.type === "ANNOUNCEMENT") {
+        const p = msg.payload || {};
+        setLabAlerts((prev) => [
+          {
+            kind: "announcement",
+            notificationId: p.notificationId,
+            title: p.title,
+            message: p.message,
+            ts: Date.now(),
+          },
+          ...prev,
+        ]);
+        ackNotification(p.notificationId);
+        return;
       }
     };
 
@@ -177,7 +209,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     }
 
     return () => {
-      // keeps socket running
+      // keep socket alive
     };
   }, [labAlerts, user, user?.id]);
 
@@ -215,7 +247,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
   const [mobileOpen, setMobileOpen] = useState(false); // small screens
   const [collapsed, setCollapsed] = useState(false); // desktop collapse
 
-  // inside component
   const location = useLocation();
   const navItems = [
     { key: "Dashboard", icon: Icons.dashboard, path: "/dashboard/patient" },
@@ -360,7 +391,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
       <main
         className={[
           "tw-flex-1 tw-min-h-screen tw-bg-fixed",
-          "tw-pt-16 lg:tw-pt-0", // account for mobile top bar
+          "tw-pt-16 lg:tw-pt-0",
           collapsed ? "lg:tw-ml-20" : "lg:tw-ml-72",
           "tw-px-5 md:tw-px-8 tw-pb-10",
         ].join(" ")}
@@ -369,7 +400,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           backgroundAttachment: "fixed",
         }}
       >
-        {/* Decorative background blobs (soft, behind cards) */}
+        {/* Decorative background blobs */}
         <div className="tw-pointer-events-none tw-absolute tw-inset-0 tw--z-10">
           <div className="tw-absolute tw-top-24 tw-right-[-6rem] tw-w-[22rem] tw-h-[22rem] tw-rounded-full tw-bg-blush-200/30 tw-blur-3xl" />
           <div className="tw-absolute tw-bottom-16 tw-left-[-4rem] tw-w-[18rem] tw-h-[18rem] tw-rounded-full tw-bg-sand-100/40 tw-blur-3xl" />
@@ -387,7 +418,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
                 {displayName}
               </p>
             </div>
-            {/* Daily log quick action */}
           </header>
 
           {/* Clinician */}
@@ -426,9 +456,8 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
 
         {/* Content */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
-          {/* Goals progress — glass & floating */}
+          {/* Goals progress */}
           <div className="tw-rounded-[24px] tw-bg-white/60 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
-            {/* floating badge */}
             <span className="tw-absolute tw--top-3 tw-left-6 tw-bg-white/80 tw-backdrop-blur tw-text-clay-700 tw-text-xs tw-px-3 tw-py-1 tw-rounded-full tw-shadow">
               Progress
             </span>
@@ -466,7 +495,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               </Pie>
             </PieChart>
 
-            {/* Percent + counts */}
             <p className="tw-mt-3 tw-text-center">
               <span className="tw-text-2xl tw-font-bold tw-text-clay-700">
                 {percentComplete}%
@@ -477,7 +505,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               {completedGoals}/{totalGoals} goals
             </p>
 
-            {/* Friendly empty state */}
             {totalGoals === 0 && (
               <p className="tw-mt-2 tw-text-xs tw-text-cocoa-600">
                 No goals yet — add one to get started.
@@ -485,7 +512,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             )}
           </div>
 
-          {/* Inbox — clean card */}
+          {/* Inbox — labs + announcements */}
           <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Inbox
@@ -497,38 +524,45 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               <ul className="tw-space-y-2">
                 {labAlerts.map((a) => (
                   <li
-                    key={`${a.notificationId}-${a.labId}-${a.ts}`}
+                    key={`${a.notificationId}-${a.kind}-${a.ts}`}
                     className="tw-flex tw-items-center tw-justify-between tw-bg-blush-100 tw-text-clay-700 tw-rounded-xl tw-px-3 tw-py-2"
                   >
-                    <span className="tw-text-sm">
-                      New lab: <strong>{a.title}</strong>{" "}
-                      {a.unit ? `(${a.unit})` : ""}
-                    </span>
-                    <Link
-                      to={`/dashboard/lab-results?open=${a.labId}`}
-                      className="tw-text-sm tw-underline"
-                      onClick={() => {
-                        if (
-                          window.socketInstance?.readyState === WebSocket.OPEN
-                        ) {
-                          window.socketInstance.send(
-                            JSON.stringify({
-                              type: "notif:ack",
-                              notificationId: a.notificationId,
-                            })
-                          );
-                        }
-                      }}
-                    >
-                      View
-                    </Link>
+                    {a.kind === "lab" ? (
+                      <>
+                        <span className="tw-text-sm">
+                          New lab: <strong>{a.title}</strong>{" "}
+                          {a.unit ? `(${a.unit})` : ""}
+                        </span>
+                        <Link
+                          to={`/dashboard/lab-results?open=${a.labId}`}
+                          className="tw-text-sm tw-underline"
+                          onClick={() => ackNotification(a.notificationId)}
+                        >
+                          View
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <span className="tw-text-sm tw-flex-1 tw-pr-2">
+                          Announcement: <strong>{a.title}</strong>
+                          {a.message ? ` — ${a.message}` : ""}
+                        </span>
+                        <Link
+                          to="/dashboard/inbox"
+                          className="tw-text-sm tw-underline"
+                          onClick={() => ackNotification(a.notificationId)}
+                        >
+                          Open
+                        </Link>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
           </div>
 
-          {/* Medications — soft gradient chip style */}
+          {/* Medications */}
           <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
               <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
@@ -544,7 +578,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             </button>
           </div>
 
-          {/* Lab Results — gradient w/ CTA */}
+          {/* Lab Results */}
           <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
@@ -558,7 +592,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             </button>
           </div>
 
-          {/* Suggested Goals (AI) — list chips */}
+          {/* Suggested Goals (AI) */}
           <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
               Suggested Goals (AI)
@@ -589,7 +623,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             </div>
           </div>
 
-          {/* Daily Log — simple card */}
+          {/* Daily Log */}
           <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Daily Log

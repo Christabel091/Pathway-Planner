@@ -20,6 +20,11 @@ const typeMeta = {
     bg: "tw-bg-[#eef3ff] tw-border-[#d3ddff] tw-text-[#1f3f7a]",
     to: () => `/dashboard/inbox`,
   },
+  ANNOUNCEMENT: {
+    label: "Announcement",
+    bg: "tw-bg-[#fffbe6] tw-border-[#f6e9bf] tw-text-[#7a5a1f]", // tweak as you like
+    to: () => `/dashboard/inbox`,
+  },
 };
 
 function fmtWhen(ts) {
@@ -95,7 +100,7 @@ export default function InboxPage() {
         </Link>
       </header>
       <p className="tw-text-sm tw-text-cocoa-700 tw-mb-4">
-        All notifications from your clinician and system.
+        All notifications from your admin, clinician and system.
       </p>
 
       {loading && <div className="tw-text-sm">Loading…</div>}
