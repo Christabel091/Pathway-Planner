@@ -1,9 +1,10 @@
 // src/pages/admin/AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
+import Modal from "../../components/Modal.jsx";
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const displayName = user?.username || "Admin";
 
   const [announcementTitle, setAnnouncementTitle] = useState("");
@@ -14,7 +15,13 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState("");
+
+  // modal for logout
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("success");
+
   const API_BASE = import.meta.env.VITE_BACKEND_URL;
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -90,6 +97,15 @@ export default function AdminDashboard() {
     }
   };
 
+  function handleLogout() {
+    // clear auth
+    setModalType("success");
+    setModalMessage("You have been logged out successfully.");
+    setTimeout(() => {
+      logout();
+    }, 1500);
+  }
+
   return (
     <div className="tw-min-h-screen tw-bg-gradient-to-b tw-from-rose-50 tw-via-amber-50 tw-to-emerald-50 tw-flex tw-items-start tw-justify-center tw-px-4 tw-py-10">
       <div className="tw-w-full tw-max-w-5xl tw-bg-white tw-rounded-3xl tw-shadow-xl tw-p-8 tw-space-y-8">
@@ -106,9 +122,18 @@ export default function AdminDashboard() {
               </span>
             </p>
           </div>
-          <span className="tw-inline-flex tw-items-center tw-rounded-full tw-bg-emerald-50 tw-text-emerald-700 tw-px-4 tw-py-1 tw-text-xs tw-font-medium">
-            Admin Control Panel
-          </span>
+
+          <div className="tw-flex tw-items-center tw-gap-2">
+            <span className="tw-inline-flex tw-items-center tw-rounded-full tw-bg-emerald-50 tw-text-emerald-700 tw-px-4 tw-py-1 tw-text-xs tw-font-medium">
+              Admin Control Panel
+            </span>
+            <button
+              onClick={handleLogout}
+              className="tw-bg-rose-500 hover:tw-bg-rose-600 tw-text-white tw-text-xs tw-font-medium tw-px-3 tw-py-1.5 tw-rounded-xl tw-shadow-sm tw-transition"
+            >
+              Log Out
+            </button>
+          </div>
         </header>
 
         {/* Content grid: Announcement + Manage Users */}
@@ -211,7 +236,7 @@ export default function AdminDashboard() {
                     {users.length === 0 && (
                       <tr>
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="tw-px-3 tw-py-4 tw-text-center tw-text-gray-400"
                         >
                           No users found.
@@ -234,6 +259,11 @@ export default function AdminDashboard() {
                         </td>
                         <td className="tw-px-3 tw-py-2 tw-text-gray-700">
                           {u.role}
+                          {u.role === "admin" && u.id === user.id && (
+                            <span className="tw-ml-2 tw-text-[10px] tw-font-semibold tw-text-rose-700 tw-bg-rose-100 tw-px-2 tw-py-0.5 tw-rounded-full tw-inline-block">
+                              (YOU:DO NOT DELETE)
+                            </span>
+                          )}
                         </td>
                         <td className="tw-px-3 tw-py-2 tw-text-gray-700">
                           {u.created_at
@@ -268,6 +298,16 @@ export default function AdminDashboard() {
           <span>Admin tools · minimal view</span>
         </footer>
       </div>
+
+      {/* Logout modal */}
+      {modalMessage && (
+        <Modal
+          message={modalMessage}
+          type={modalType}
+          duration={3000}
+          onClose={() => setModalMessage("")}
+        />
+      )}
     </div>
   );
 }
