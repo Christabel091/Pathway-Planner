@@ -12,10 +12,10 @@ import authRoutes from "./routes/auth.js";
 import infoRouter from "./routes/info.js";
 import patientRouter from "./routes/patients.js";
 import regenerateCodeRouter from "./routes/regenerateCode.js";
+import createAdminRouter from "./routes/admin.js";
 
 const prisma = new PrismaClient();
 const app = express();
-
 //middlewares
 app.use(
   cors({
@@ -121,7 +121,8 @@ function emitToUser(userId, payload) {
   }
   return sent;
 }
-
+const adminRouter = createAdminRouter(prisma, emitToUser);
+app.use("/admin", adminRouter);
 // map patient_id -> user_id
 async function getPatientUserId(patientId) {
   const p = await prisma.patient.findUnique({

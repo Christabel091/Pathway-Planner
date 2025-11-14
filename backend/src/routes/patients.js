@@ -1,8 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
-import crypto from "node:crypto";
-import generateInviteCode from "../../utils/generateCode.js";
 import { PrismaClient, GoalStatus } from "@prisma/client";
 
 const patientRouter = express.Router();
@@ -18,12 +16,9 @@ patientRouter.get("/:userId", async (req, res) => {
         clinician: true, // single relation
         goals: true, // array relation
         aiSuggestions: true,
-        journals: { take: 10, orderBy: { created_at: "desc" } }, // sample paging
         labs: { take: 5, orderBy: { created_at: "desc" } },
-        meals: { take: 10, orderBy: { created_at: "desc" } },
         medicines: true,
         caretakerLinks: { include: { caretaker: true } },
-        symptoms: { take: 20, orderBy: { created_at: "desc" } },
       },
     });
     if (!patient) {

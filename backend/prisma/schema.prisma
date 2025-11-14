@@ -8,57 +8,50 @@ datasource db {
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  email            String    @unique(map: "email") @db.VarChar(150)
-  UserName         String    @db.VarChar(150)
-  password_hash    String    @db.VarChar(72)
-  profileCompleted Boolean   @default(false)
+  id               Int            @id @default(autoincrement())
+  email            String         @unique(map: "email") @db.VarChar(150)
+  UserName         String         @db.VarChar(150)
+  password_hash    String         @db.VarChar(72)
   role             Role
-  created_at       DateTime? @default(now()) @db.DateTime(0)
-  updated_at       DateTime? @default(now()) @updatedAt @db.DateTime(0)
+  created_at       DateTime?      @default(now()) @db.DateTime(0)
+  updated_at       DateTime?      @default(now()) @updatedAt @db.DateTime(0)
+  profileCompleted Boolean        @default(false)
+  Caretaker        Caretaker?
+  Clinician        Clinician?
+  notifications    Notification[]
+  Patient          Patient?
 
-  auditLogs    AuditLog[]    @relation("AuditActor")
-  Caretaker    Caretaker?
-  Clinician    Clinician?
-  goalVersions GoalVersion[] @relation("GoalVersionProposedBy")
-  Patient      Patient?
-  notifications Notification[]
   @@map("users")
 }
 
 model Patient {
-  id           Int @id @default(autoincrement())
-  user_id      Int @unique(map: "uq_patients_user")
-  clinician_id Int @map("clinician_id")
-
-  full_name              String                @db.VarChar(150)
-  dob                    DateTime              @db.Date
-  gender                 Gender?               @default(prefer_not_say)
-  phone_number           String?               @db.VarChar(20)
-  address                String?               @db.VarChar(255)
-  relative_contact_name  String?               @db.VarChar(150)
-  relative_contact_email String?               @db.VarChar(150)
-  relative_contact_phone String?               @db.VarChar(20)
+  id                     Int                @id @default(autoincrement())
+  user_id                Int                @unique(map: "uq_patients_user")
+  clinician_id           Int                @map("clinician_id")
+  full_name              String             @db.VarChar(150)
+  dob                    DateTime           @db.Date
+  gender                 Gender?            @default(prefer_not_say)
+  phone_number           String?            @db.VarChar(20)
+  address                String?            @db.VarChar(255)
+  relative_contact_name  String?            @db.VarChar(150)
+  relative_contact_email String?            @db.VarChar(150)
+  relative_contact_phone String?            @db.VarChar(20)
   blood_type             BloodType?
-  allergies              String?               @db.Text
-  chronic_conditions     String?               @db.Text
-  current_medications    String?               @db.Text
-  height_cm              Decimal?              @db.Decimal(5, 2)
-  weight_kg              Decimal?              @db.Decimal(5, 2)
-  created_at             DateTime?             @default(now()) @db.DateTime(0)
-  updated_at             DateTime?             @default(now()) @updatedAt @db.DateTime(0)
+  allergies              String?            @db.Text
+  chronic_conditions     String?            @db.Text
+  current_medications    String?            @db.Text
+  height_cm              Decimal?           @db.Decimal(5, 2)
+  weight_kg              Decimal?           @db.Decimal(5, 2)
+  created_at             DateTime?          @default(now()) @db.DateTime(0)
+  updated_at             DateTime?          @default(now()) @updatedAt @db.DateTime(0)
   aiSuggestions          AiSuggestion[]
   goals                  Goal[]
-  journals               JournalEntry[]
   labs                   LabResult[]
-  meals                  Meal[]
   medicines              Medicine[]
   caretakerLinks         PatientCaretaker[]
-  dailyMetrics           PatientDailyMetrics[]
-  symptoms               SymptomLog[]
-  user                   User                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_patients_user")
-  // NEW relation to Clinician (Restrict delete to protect integrity)
-  clinician              Clinician             @relation(fields: [clinician_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_patients_clinician")
+  dailyLogs              PatientDailyLog[]
+  clinician              Clinician          @relation(fields: [clinician_id], references: [id], onUpdate: NoAction, map: "fk_patients_clinician")
+  user                   User               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_patients_user")
 
   @@index([clinician_id], map: "idx_patients_clinician")
   @@map("patients")
@@ -74,13 +67,12 @@ model Clinician {
   contact_email   String?   @db.VarChar(150)
   contact_phone   String?   @db.VarChar(20)
   office_address  String?   @db.VarChar(255)
-  inviteCode      String    @unique
-  inviteUpdatedAt DateTime  @default(now())
   created_at      DateTime? @default(now()) @db.DateTime(0)
   updated_at      DateTime? @default(now()) @updatedAt @db.DateTime(0)
+  inviteCode      String    @unique
+  inviteUpdatedAt DateTime  @default(now())
+  user            User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_clinicians_user")
   patients        Patient[]
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_clinicians_user")
 
   @@map("clinicians")
 }
@@ -99,26 +91,17 @@ model Caretaker {
   @@map("caretakers")
 }
 
-
-enum NotificationType {
-  LAB_NEW
-  GOAL_APPROVED
-  MEDICATION
-  MESSAGE
-}
-
 model Notification {
-  id           Int               @id @default(autoincrement())
+  id           Int              @id @default(autoincrement())
   user_id      Int
   type         NotificationType
-  entity       String?           @db.VarChar(64)   // e.g., "lab_result"
+  entity       String?          @db.VarChar(64)
   entity_id    Int?
   payload      Json?
-  created_at   DateTime?         @default(now()) @db.DateTime(0)
-  delivered_at DateTime?         @db.DateTime(0)
-  read_at      DateTime?         @db.DateTime(0)
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notifications_user")
+  created_at   DateTime?        @default(now()) @db.DateTime(0)
+  delivered_at DateTime?        @db.DateTime(0)
+  read_at      DateTime?        @db.DateTime(0)
+  user         User             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notifications_user")
 
   @@index([user_id, created_at], map: "idx_notifications_user_created")
   @@map("notifications")
@@ -128,11 +111,10 @@ model PatientCaretaker {
   patient_id   Int
   caretaker_id Int
   role_note    String?   @db.VarChar(120)
-  permissions  String? // keep as String? since your DB had SET/var; JSON is also fine if you prefer
+  permissions  String?
   created_at   DateTime? @default(now()) @db.DateTime(0)
-
-  caretaker Caretaker @relation(fields: [caretaker_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pc_caretaker")
-  patient   Patient   @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pc_patient")
+  caretaker    Caretaker @relation(fields: [caretaker_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pc_caretaker")
+  patient      Patient   @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pc_patient")
 
   @@id([patient_id, caretaker_id])
   @@index([caretaker_id], map: "fk_pc_caretaker")
@@ -150,46 +132,10 @@ model Goal {
   created_at    DateTime?      @default(now()) @db.DateTime(0)
   updated_at    DateTime?      @default(now()) @updatedAt @db.DateTime(0)
   aiSuggestions AiSuggestion[]
-  progress      GoalProgress[]
-  versions      GoalVersion[]
   patient       Patient        @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_goals_patient")
-  journals      JournalEntry[]
 
   @@index([patient_id], map: "idx_goals_patient")
   @@map("goals")
-}
-
-model GoalVersion {
-  id              Int       @id @default(autoincrement())
-  goal_id         Int
-  proposed_by_id  Int?
-  version_number  Int
-  target_per_week Int?
-  created_at      DateTime? @default(now()) @db.DateTime(0)
-  goal            Goal      @relation(fields: [goal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gv_goal")
-  proposedBy      User?     @relation("GoalVersionProposedBy", fields: [proposed_by_id], references: [id], onUpdate: NoAction, map: "fk_gv_user")
-
-  @@unique([goal_id, version_number], map: "uq_gv_goal_version")
-  @@index([proposed_by_id], map: "fk_gv_user")
-  @@map("goal_version")
-}
-
-model JournalEntry {
-  id         Int         @id @default(autoincrement())
-  patient_id Int
-  goal_id    Int?
-  title      String?     @db.VarChar(200)
-  body       String      @db.Text
-  mood       Int?        @db.TinyInt
-  visibility Visibility? @default(private)
-  created_at DateTime?   @default(now()) @db.DateTime(0)
-  updated_at DateTime?   @default(now()) @updatedAt @db.DateTime(0)
-  goal       Goal?       @relation(fields: [goal_id], references: [id], onUpdate: NoAction, map: "fk_journal_goal")
-  patient    Patient     @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_journal_patient")
-
-  @@index([goal_id], map: "fk_journal_goal")
-  @@index([patient_id, created_at], map: "idx_journal_patient_created")
-  @@map("journal_entries")
 }
 
 model Approval {
@@ -212,56 +158,26 @@ model LabResult {
   file_url   String?   @db.VarChar(255)
   decided_at DateTime? @default(now()) @db.DateTime(0)
   created_at DateTime? @default(now()) @db.DateTime(0)
-  read_at    DateTime? @db.DateTime(0) // <-- add this
+  read_at    DateTime? @db.DateTime(0)
   patient    Patient   @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_lab_patient")
+
   @@index([patient_id], map: "idx_lab_patient")
   @@map("lab_result")
 }
 
 model Medicine {
-  id               Int                  @id @default(autoincrement())
+  id               Int              @id @default(autoincrement())
   patient_id       Int
-  medicine_name    String?              @db.VarChar(200)
-  taken            Boolean?             @default(false)
-  taken_at         DateTime?            @default(now()) @db.DateTime(0)
+  medicine_name    String?          @db.VarChar(200)
+  taken            Boolean?         @default(false)
+  taken_at         DateTime?        @default(now()) @db.DateTime(0)
   patient_daily_id Int?
-  patientDaily     PatientDailyMetrics? @relation(fields: [patient_daily_id], references: [id], onUpdate: NoAction, map: "fk_medicine_daily")
-  patient          Patient              @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_medicine_patient")
+  patientDaily     PatientDailyLog? @relation(fields: [patient_daily_id], references: [id], onUpdate: NoAction, map: "fk_medicine_daily")
+  patient          Patient          @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_medicine_patient")
 
   @@index([patient_id], map: "fk_medicine_patient")
   @@index([patient_daily_id], map: "idx_medicine_daily")
   @@map("medicine")
-}
-
-model SymptomLog {
-  id               Int                  @id @default(autoincrement())
-  patient_id       Int
-  symptoms         String?              @db.VarChar(200)
-  severity         Int?
-  created_at       DateTime?            @default(now()) @db.DateTime(0)
-  patient_daily_id Int?
-  patientDaily     PatientDailyMetrics? @relation(fields: [patient_daily_id], references: [id], onUpdate: NoAction, map: "fk_symptom_daily")
-  patient          Patient              @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_symptom_patient")
-
-  @@index([patient_daily_id], map: "idx_symptom_daily")
-  @@index([patient_id, created_at], map: "idx_symptom_patient_created")
-  @@map("symptom_log")
-}
-
-model Meal {
-  id               Int                  @id @default(autoincrement())
-  patient_id       Int
-  foodname         String?              @db.VarChar(200)
-  profile_image    String?              @db.VarChar(255)
-  description      String?              @db.Text
-  created_at       DateTime?            @default(now()) @db.DateTime(0)
-  patient_daily_id Int?
-  patientDaily     PatientDailyMetrics? @relation(fields: [patient_daily_id], references: [id], onUpdate: NoAction, map: "fk_meal_daily")
-  patient          Patient              @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_meal_patient")
-
-  @@index([patient_daily_id], map: "idx_meal_daily")
-  @@index([patient_id, created_at], map: "idx_meal_patient_created")
-  @@map("meal")
 }
 
 model AiSuggestion {
@@ -280,60 +196,32 @@ model AiSuggestion {
   @@map("ai_suggestion")
 }
 
-model AuditLog {
-  id            String    @id @db.Char(36)
-  actor_user_id Int
-  actiontype    String    @db.VarChar(255)
-  entity        String    @db.VarChar(255)
-  entity_id     String    @db.Char(36)
-  diff          Json?
-  created_at    DateTime? @default(now()) @db.DateTime(0)
-
-  actor User @relation("AuditActor", fields: [actor_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_audit_actor")
-
-  @@index([actor_user_id], map: "idx_audit_actor")
-  @@index([created_at], map: "idx_audit_created")
-  @@index([entity, entity_id], map: "idx_audit_entity")
-  @@map("audit_log")
-}
-
-model PatientDailyMetrics {
-  id          Int       @id @default(autoincrement())
+model PatientDailyLog {
+  id          Int        @id @default(autoincrement())
   patient_id  Int
-  day_date    DateTime  @db.Date
-  sleep_hours Decimal?  @db.Decimal(4, 2)
-  notes       String?   @db.Text
-  created_at  DateTime? @default(now()) @db.DateTime(0)
-  updated_at  DateTime? @default(now()) @updatedAt @db.DateTime(0)
-
-  progress  GoalProgress[]
-  meals     Meal[]
-  medicines Medicine[]
-  symptoms  SymptomLog[]
-
-  patient Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pdm_patient")
+  day_date    DateTime   @db.Date
+  sleep_hours Decimal?   @db.Decimal(4, 2)
+  notes       String?    @db.Text
+  created_at  DateTime?  @default(now()) @db.DateTime(0)
+  updated_at  DateTime?  @default(now()) @updatedAt @db.DateTime(0)
+  exercise    String?    @db.Text
+  meals       String?    @db.Text
+  mood        Int?       @db.TinyInt
+  symptoms    String?    @db.Text
+  medicines   Medicine[]
+  patient     Patient    @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pdm_patient")
 
   @@unique([patient_id, day_date], name: "uq_pdm_patient_day", map: "uq_pdm_patient_day")
   @@index([patient_id, day_date], map: "idx_pdm_patient_day")
   @@map("patient_daily_metrics")
 }
 
-model GoalProgress {
-  id               Int       @id @default(autoincrement())
-  goal_id          Int
-  patient_daily_id Int
-  value_decimal    Decimal?  @db.Decimal(10, 2)
-  value_bool       Boolean?
-  notes            String?   @db.VarChar(255)
-  created_at       DateTime? @default(now()) @db.DateTime(0)
-
-  patientDaily PatientDailyMetrics @relation(fields: [patient_daily_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gp_daily")
-  goal         Goal                @relation(fields: [goal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gp_goal")
-
-  @@unique([goal_id, patient_daily_id], name: "uq_gp_goal_day", map: "uq_gp_goal_day")
-  @@index([patient_daily_id], map: "idx_gp_daily")
-  @@index([goal_id], map: "idx_gp_goal")
-  @@map("goal_progress")
+enum NotificationType {
+  LAB_NEW
+  GOAL_APPROVED
+  MEDICATION
+  MESSAGE
+  ANNOUNCEMENT
 }
 
 enum Role {
@@ -366,11 +254,6 @@ enum GoalStatus {
   completed
   pending_approval
   cancelled
-}
-
-enum Visibility {
-  private
-  care_team
 }
 
 enum ApprovalStatus {
