@@ -5,11 +5,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell } from "recharts";
 import Modal from "../../components/Modal.jsx";
 
-/* Warm theme ring colors */
+
 const PIE_COLORS = {
-  completedGradientStart: "#aa7b4fff",
-  completedGradientEnd: "#754829ff",
-  remaining: "#dcb2a1ff",
+  completedGradientStart: "#76B28C",   // soft emerald
+  completedGradientEnd: "#A1D5BA",     // mint highlight
+  remaining: "#F7E8CF",                // soft cream/peach
 };
 
 /* Small helpers */
@@ -433,7 +433,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
       {/* Header */}
       <div className="tw-mb-6 tw-flex tw-flex-col sm:tw-flex-row tw-items-start sm:tw-items-center tw-justify-between">
         <div>
-          <h1 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
+          <h1 className="tw-text-2xl tw-font-semibold tw-text-emerald-700">
             Your Goals
           </h1>
           <p className="tw-text-cocoa-700 tw-text-sm tw-mt-1">
@@ -443,7 +443,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
         <div className="tw-mt-3 sm:tw-mt-0 tw-flex tw-gap-2">
           <button
             onClick={() => setShowCreate(true)}
-            className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-rounded-xl tw-px-4 tw-py-2 tw-shadow"
+            className="tw-bg-clay-400 hover:tw-bg-clay-600 tw-text-white tw-rounded-xl tw-px-4 tw-py-2 tw-shadow"
             disabled={!patientInfo?.id}
             title={!patientInfo?.id ? "Patient not loaded yet" : ""}
           >
@@ -508,7 +508,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
               className={[
                 "tw-text-xs tw-rounded-full tw-px-3 tw-py-1",
                 filter === f.key
-                  ? "tw-bg-clay-600 tw-text-white"
+                  ? "tw-bg-clay-400 tw-text-white"
                   : "tw-bg-white/80 tw-text-clay-700 hover:tw-bg-white",
               ].join(" ")}
             >
@@ -606,7 +606,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
         <h2 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
           AI Summary
         </h2>
-        <div className="tw-rounded-[20px] tw-bg-white/60 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-4">
+        <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-4">
           {aiSummary ? (
             <p className="tw-text-sm tw-text-cocoa-700">{aiSummary}</p>
           ) : (
@@ -616,7 +616,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
           )}
           <div className="tw-flex tw-gap-2 tw-mt-3">
             <button
-              className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-600 tw-text-white hover:tw-bg-clay-700"
+              className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-400 tw-text-white hover:tw-bg-clay-600"
               onClick={() => {
                 // TODO: POST /ai/goals/summary?patient_id=...
               }}

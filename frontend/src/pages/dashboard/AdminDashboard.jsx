@@ -194,7 +194,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Manage Users card */}
-          <div className="tw-bg-white tw-rounded-2xl tw-shadow-md tw-p-6 tw-flex tw-flex-col tw-gap-3 tw-border tw-border-emerald-50">
+          <div className="tw-bg-gradient-to-br tw-from-amber-50 tw-via-white tw-to-amber-50 tw-rounded-2xl tw-shadow-md tw-p-6 tw-flex tw-flex-col tw-gap-3 tw-border tw-border-emerald-50">
             <div>
               <h2 className="tw-text-lg tw-font-semibold tw-text-emerald-800">
                 Manage Users
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
                     {users.map((u) => (
                       <tr
                         key={u.id}
-                        className="tw-border-t tw-border-gray-100 hover:tw-bg-emerald-50/40"
+                        className="tw-border-t tw-border-gray-100 hover:tw-bg-emerald-100/40"
                       >
                         <td className="tw-px-3 tw-py-2 tw-text-gray-700">
                           {u.id}

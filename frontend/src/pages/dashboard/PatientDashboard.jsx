@@ -8,11 +8,10 @@ import AddClinicianModal from "../../components/AddClinicanModal";
 import { connectWebSocket } from "../../utility/webSocket";
 
 const PIE_COLORS = {
-  completedGradientStart: "#aa7b4fff",
-  completedGradientEnd: "#754829ff",
-  remaining: "#dcb2a1ff",
+  completedGradientStart: "#76B28C",   // soft emerald
+  completedGradientEnd: "#A1D5BA",     // mint highlight
+  remaining: "#F7E8CF",                // soft cream/peach
 };
-
 // Simple inline SVG icons (no extra deps)
 const Icons = {
   menu: (cls = "tw-w-6 tw-h-6") => (
@@ -269,20 +268,20 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
       <div className="tw-fixed tw-top-0 tw-left-0 tw-right-0 tw-z-30 tw-flex tw-items-center tw-justify-between tw-bg-white/80 tw-backdrop-blur tw-border-b tw-border-white/60 tw-px-4 tw-py-3 lg:tw-hidden">
         <button
           onClick={() => setMobileOpen(true)}
-          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-700"
+          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-400"
           aria-label="Open navigation menu"
         >
           {Icons.menu()}
           <span className="tw-font-semibold">Menu</span>
         </button>
-        <span className="tw-font-bold tw-text-clay-700">Pathway Planner</span>
+        <span className="tw-font-bold tw-text-emerald-700">Pathway Planner</span>
         <span className="tw-w-10" />
       </div>
 
       <aside
         className={[
           "tw-hidden lg:tw-flex tw-h-screen tw-fixed tw-left-0 tw-top-0 tw-z-20",
-          "tw-bg-gradient-to-b tw-from-sand-50 tw-via-blush-50 tw-to-sand-100",
+          "tw-bg-[#FFF9F3] tw-from-sand-50 tw-via-blush-50 tw-to-sand-100",
           "tw-flex-col tw-justify-between tw-p-4",
           collapsed ? "tw-w-20" : "tw-w-72",
         ].join(" ")}
@@ -292,7 +291,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           <div className="tw-flex tw-items-center tw-justify-between">
             <h1
               className={[
-                "tw-text-2xl tw-font-bold tw-text-clay-700 tw-tracking-tight",
+                "tw-text-2xl tw-font-bold tw-text-emerald-600 tw-tracking-tight",
                 collapsed ? "tw-sr-only" : "",
               ].join(" ")}
             >
@@ -301,7 +300,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             <button
               onClick={() => setCollapsed(!collapsed)}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="tw-p-2 tw-rounded-lg tw-text-clay-700 hover:tw-bg-blush-100 tw-transition"
+              className="tw-p-2 tw-rounded-lg tw-text-clay-400 hover:tw-bg-blush-100 tw-transition"
               title={collapsed ? "Expand" : "Collapse"}
             >
               {Icons.chevron(
@@ -320,8 +319,8 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
                     className={[
                       "tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-transition",
                       location.pathname === item.path
-                        ? "tw-bg-clay-600 tw-text-white"
-                        : "tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700",
+                        ? "tw-bg-clay-400 tw-text-white"
+                        : "tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-600",
                     ].join(" ")}
                   >
                     {item.icon("tw-w-5 tw-h-5")}
@@ -409,7 +408,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         {/* Header row: Welcome + Clinician */}
         <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
           {/* Welcome */}
-          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-clay-200/80 tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
+          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
             <div>
               <h2 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
                 Welcome
@@ -421,7 +420,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </header>
 
           {/* Clinician */}
-          <section className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <section className="tw-rounded-[20px] tw-bg-[#FFF9EF] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Your Clinician
             </h3>
@@ -445,7 +444,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
                 </p>
                 <button
                   onClick={() => setIsAddClinicanModal(true)}
-                  className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+                  className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
                 >
                   Add Clinician
                 </button>
@@ -457,7 +456,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         {/* Content */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
           {/* Goals progress */}
-          <div className="tw-rounded-[24px] tw-bg-white/60 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
+          <div className="tw-rounded-[24px] tw-bg-[#FFF4E7] tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
             <span className="tw-absolute tw--top-3 tw-left-6 tw-bg-white/80 tw-backdrop-blur tw-text-clay-700 tw-text-xs tw-px-3 tw-py-1 tw-rounded-full tw-shadow">
               Progress
             </span>
@@ -496,7 +495,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             </PieChart>
 
             <p className="tw-mt-3 tw-text-center">
-              <span className="tw-text-2xl tw-font-bold tw-text-clay-700">
+              <span className="tw-text-2xl tw-font-bold tw-text-emerald-700">
                 {percentComplete}%
               </span>{" "}
               completed
@@ -513,7 +512,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </div>
 
           {/* Inbox — labs + announcements */}
-          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col">
+          <div className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-p-6 tw-flex tw-flex-col">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Inbox
             </h3>
@@ -563,7 +562,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </div>
 
           {/* Medications */}
-          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <div className="tw-rounded-[20px] tw-bg-amber-100 tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
               <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
                 Medications
@@ -573,19 +572,19 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               </span>
             </div>
             <p className="tw-mt-2 tw-mb-3">Stay on track with your schedule.</p>
-            <button className="tw-self-start tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
+            <button className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
               View Schedule
             </button>
           </div>
 
           {/* Lab Results */}
-          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <div className="tw-rounded-[20px] tw-bg-amber-100 tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
             </h3>
             <p className="tw-mb-3">View results sent by your clinican </p>
             <button
-              className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+              className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
               onClick={() => navigate("/dashboard/lab-results")}
             >
               View Lab Record
@@ -593,7 +592,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </div>
 
           {/* Suggested Goals (AI) */}
-          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
+          <div className= "tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
               Suggested Goals (AI)
             </h3>
@@ -615,7 +614,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
 
             <div className="tw-mt-4">
               <button
-                className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+                className="tw-bg-emerald-700 hover:tw-bg-emerald-800 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
                 onClick={() => navigate("/dashboard/goals")}
               >
                 Review in Goals
@@ -624,14 +623,14 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </div>
 
           {/* Daily Log */}
-          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6">
+          <div className="tw-rounded-[20px] tw-bg-[#D4E8C7] tw-shadow-soft tw-p-6">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Daily Log
             </h3>
             <p className="tw-mb-3">
               Track symptoms, mood, meals, sleep, exercise and vitals.
             </p>
-            <button className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
+            <button className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
               Open Daily Log
             </button>
           </div>
