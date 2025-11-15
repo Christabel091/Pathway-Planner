@@ -7,9 +7,9 @@ import { PieChart, Pie, Cell } from "recharts";
 
 /* Progress ring palette (warm, like patient dashboard) */
 const PIE_COLORS = {
-  completedGradientStart: "#aa7b4fff",
-  completedGradientEnd: "#754829ff",
-  remaining: "#dcb2a1ff",
+  completedGradientStart: "#76B28C",   // soft emerald
+  completedGradientEnd: "#A1D5BA",     // mint highlight
+  remaining: "#F7E8CF",                // soft cream/peach
 };
 
 export default function CaretakerDashboard() {
@@ -137,7 +137,7 @@ export default function CaretakerDashboard() {
         {/* Header row */}
         <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
           {/* Welcome + patient selector */}
-          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-clay-200/80 tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
+          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
             <div>
               <h2 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
                 Welcome
@@ -170,7 +170,7 @@ export default function CaretakerDashboard() {
           </header>
 
           {/* Patient snapshot (readonly) */}
-          <section className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6">
+          <section className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-p-6">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Patient Snapshot
             </h3>
@@ -210,7 +210,7 @@ export default function CaretakerDashboard() {
         {/* Content grid */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
           {/* Goals progress — glass & floating (readonly) */}
-          <div className="tw-rounded-[24px] tw-bg-white/60 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
+          <div className="tw-rounded-[24px] tw-bg-[#FFF4E7] tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
             <span className="tw-absolute tw--top-3 tw-left-6 tw-bg-white/80 tw-backdrop-blur tw-text-clay-700 tw-text-xs tw-px-3 tw-py-1 tw-rounded-full tw-shadow">
               Progress
             </span>
@@ -260,7 +260,7 @@ export default function CaretakerDashboard() {
           </div>
 
           {/* Medications — soft gradient, view-only */}
-          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <div className="tw-rounded-[20px] tw-bg-amber-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
               <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
                 Medications (view only)
@@ -274,14 +274,14 @@ export default function CaretakerDashboard() {
             </p>
             <Link
               to="/dashboard/caretaker/medications"
-              className="tw-self-start tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+              className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-600 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
             >
               View Schedule
             </Link>
           </div>
 
           {/* Lab Results — gradient, view-only */}
-          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <div className="tw-rounded-[20px] tw-bg-amber-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results (view only)
             </h3>
@@ -299,14 +299,14 @@ export default function CaretakerDashboard() {
             </p>
             <Link
               to="/dashboard/caretaker/labs"
-              className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+              className="tw-bg-clay-400 hover:tw-bg-clay-600 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
             >
               View Lab Record
             </Link>
           </div>
 
           {/* Inbox / Messages */}
-          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col">
+          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-shadow-soft tw-p-6 tw-flex tw-flex-col">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Inbox
             </h3>
@@ -315,14 +315,14 @@ export default function CaretakerDashboard() {
             </p>
             <Link
               to="/dashboard/caretaker/inbox"
-              className="tw-self-start tw-text-sm tw-rounded-full tw-px-3 tw-py-1 tw-bg-white/80 hover:tw-bg-white tw-border tw-border-white/60"
+              className="tw-self-start tw-text-white tw-text-sm tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-400 hover:tw-bg-clay-600 tw-border tw-border-white/60"
             >
               Open Inbox
             </Link>
           </div>
 
           {/* Patient details quick view — readonly facts */}
-          <div className="tw-rounded-[20px] tw-bg-white/70 tw-backdrop-blur tw-shadow-soft tw-border tw-border-white/60 tw-p-6 tw-col-span-1 xl:tw-col-span-2">
+          <div className="tw-rounded-[20px] tw-bg-[#D4E8C7] tw-backdrop-blur tw-shadow-soft tw-border tw-border-white/60 tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Care Notes
             </h3>

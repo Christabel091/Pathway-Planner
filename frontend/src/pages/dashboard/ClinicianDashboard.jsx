@@ -8,10 +8,12 @@ import { PieChart, Pie, Cell } from "recharts";
 import { connectWebSocket } from "../../utility/webSocket"; // <--- ADDED
 
 const PIE_COLORS = {
-  completedGradientStart: "#aa7b4fff",
-  completedGradientEnd: "#754829ff",
-  remaining: "#dcb2a1ff",
+  completedGradientStart: "#C58A78",  // rose-clay
+  completedGradientEnd:   "#C58A78",  // solid
+  remaining:              "#FCEFE8",  // soft peach cream (new)
 };
+
+
 
 const Icons = {
   menu: (cls = "tw-w-6 tw-h-6") => (
@@ -251,13 +253,13 @@ export default function ClinicianDashboard() {
       <div className="tw-fixed tw-top-0 tw-left-0 tw-right-0 tw-z-30 tw-flex tw-items-center tw-justify-between tw-bg-white/80 tw-backdrop-blur tw-border-b tw-border-white/60 tw-px-4 tw-py-3 lg:tw-hidden">
         <button
           onClick={() => setMobileOpen(true)}
-          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-700"
+          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-400"
           aria-label="Open navigation menu"
         >
           {Icons.menu()}
           <span className="tw-font-semibold">Menu</span>
         </button>
-        <span className="tw-font-bold tw-text-clay-700">Pathway Planner</span>
+        <span className="tw-font-bold tw-text-emerald-700">Pathway Planner</span>
         <span className="tw-w-10" />
       </div>
 
@@ -274,7 +276,7 @@ export default function ClinicianDashboard() {
           <div className="tw-flex tw-items-center tw-justify-between">
             <h1
               className={[
-                "tw-text-2xl tw-font-bold tw-text-clay-700 tw-tracking-tight",
+                "tw-text-2xl tw-font-bold tw-text-emerald-600 tw-tracking-tight",
                 collapsed ? "tw-sr-only" : "",
               ].join(" ")}
             >
@@ -301,7 +303,7 @@ export default function ClinicianDashboard() {
                     className={[
                       "tw-w-full tw-flex tw-items-center tw-gap-3 tw-p-2 tw-rounded-xl tw-transition",
                       location.pathname === item.path
-                        ? "tw-bg-clay-600 tw-text-white"
+                        ? "tw-bg-clay-400 tw-text-white"
                         : "tw-text-cocoa-700 hover:tw-bg-blush-100 hover:tw-text-clay-700",
                     ].join(" ")}
                   >
@@ -344,7 +346,7 @@ export default function ClinicianDashboard() {
 
         {/* Header */}
         <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
-          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-clay-200/80 tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
+          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px]  tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
             <div>
               <h2 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
                 Welcome
@@ -399,7 +401,7 @@ export default function ClinicianDashboard() {
           </header>
 
           {/* Invite code */}
-          <section className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <section className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Invite Code
             </h3>
@@ -411,7 +413,7 @@ export default function ClinicianDashboard() {
                 {inviteCode}
               </code>
               <button
-                className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-3 tw-py-2 tw-rounded-xl tw-shadow"
+                className="tw-bg-clay-400 hover:tw-bg-clay-600 tw-text-white tw-px-3 tw-py-2 tw-rounded-xl tw-shadow"
                 onClick={handleRegenerate}
                 disabled={!clinicianId}
               >
@@ -425,7 +427,7 @@ export default function ClinicianDashboard() {
         {/* Content */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
           {/* Inbox — Pending goals + announcements */}
-          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1">
+          <div className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-p-6 tw-col-span-1">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Inbox
             </h3>
@@ -459,7 +461,7 @@ export default function ClinicianDashboard() {
                     </div>
                     <div className="tw-flex tw-gap-2">
                       <button
-                        className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-600 tw-text-white hover:tw-bg-clay-700"
+                        className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-400 tw-text-white hover:tw-bg-clay-700"
                         onClick={async () => {
                           try {
                             const r = await fetch(
@@ -546,7 +548,7 @@ export default function ClinicianDashboard() {
           </div>
 
           {/* Patients list (real) */}
-          <div className="tw-rounded-[20px] tw-bg-white tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
+          <div className="tw-rounded-[20px]  tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100  tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
               Your Patients
             </h3>
@@ -627,7 +629,7 @@ export default function ClinicianDashboard() {
                     <div className="tw-flex tw-gap-2 tw-mt-2">
                       <Link
                         to={`/dashboard/clinician/patients/${p.id}`}
-                        className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-600 tw-text-white hover:tw-bg-clay-700"
+                        className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-400 tw-text-white hover:tw-bg-clay-700"
                       >
                         View Profile
                       </Link>
@@ -650,14 +652,14 @@ export default function ClinicianDashboard() {
           </div>
 
           {/* Lab Results CTA */}
-          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <div className="tw-rounded-[20px] tw-bg-[#D4E8C7]  tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
             </h3>
             <p className="tw-mb-3">Upload or review recent labs.</p>
             <div className="tw-flex tw-gap-2">
               <button
-                className="tw-bg-clay-600 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+                className="tw-bg-clay-400 hover:tw-bg-clay-600 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
                 onClick={() => {
                   setPrefillPatientId("");
                   setShowUpload(true);
