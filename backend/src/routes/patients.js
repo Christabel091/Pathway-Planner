@@ -90,22 +90,74 @@ patientRouter.delete("/goals/:goalId", async (req, res) => {
   }
 });
 
-//patch goal for patient update status and completed
 patientRouter.patch("/goals/:goalId", async (req, res) => {
   const { goalId } = req.params;
   const { status, completed } = req.body;
+
   try {
+    const id = parseInt(goalId, 10);
+
+    // 1) Get the current goal (old status + patient)
+    const existingGoal = await prisma.goal.findUnique({
+      where: { id },
+      select: {
+        status: true,
+        patient_id: true,
+        title: true,
+      },
+    });
+
+    if (!existingGoal) {
+      return res.status(404).json({ error: "Goal not found" });
+    }
+
+    const mappedStatus = status ? mapGoalStatus(status) : undefined;
+
+    // 2) Decide *before* update if we should send a GOAL_APPROVED notification
+    const shouldNotifyGoalApproved =
+      mappedStatus &&
+      existingGoal.status === "pending_approval" &&
+      mappedStatus === "active";
+
+    // 3) Update the goal
     const updatedGoal = await prisma.goal.update({
-      where: { id: parseInt(goalId) },
+      where: { id },
       data: {
-        status: status ? mapGoalStatus(status) : undefined,
+        status: mappedStatus,
         completed: completed !== undefined ? completed : undefined,
       },
     });
-    res.json(updatedGoal);
+
+    if (shouldNotifyGoalApproved) {
+      const patient = await prisma.patient.findUnique({
+        where: { id: existingGoal.patient_id },
+        select: { user_id: true },
+      });
+
+      if (!patient) {
+        console.warn(
+          `No patient found for patient_id=${existingGoal.patient_id} when creating GOAL_APPROVED notification`
+        );
+      } else {
+        await prisma.notification.create({
+          data: {
+            user_id: patient.user_id, // actual User.id
+            type: "GOAL_APPROVED",
+            entity: "goal",
+            entity_id: updatedGoal.id, // or just `id`, same value
+            payload: {
+              title: `Your goal "${existingGoal.title}" has been approved by your clinician.`,
+              message: "go to goals page to see more details",
+            },
+          },
+        });
+      }
+    }
+
+    return res.json(updatedGoal);
   } catch (error) {
     console.error("Error updating goal:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

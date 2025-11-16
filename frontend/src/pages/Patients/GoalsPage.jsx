@@ -5,11 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell } from "recharts";
 import Modal from "../../components/Modal.jsx";
 
-
 const PIE_COLORS = {
-  completedGradientStart: "#76B28C",   // soft emerald
-  completedGradientEnd: "#A1D5BA",     // mint highlight
-  remaining: "#F7E8CF",                // soft cream/peach
+  completedGradientStart: "#76B28C", // soft emerald
+  completedGradientEnd: "#A1D5BA", // mint highlight
+  remaining: "#F7E8CF", // soft cream/peach
 };
 
 /* Small helpers */
@@ -374,7 +373,6 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
 
   const addSuggestionAsDraft = async (s) => {
     if (!patientInfo?.id) return;
-    // TODO: POST /patients/goals/:patientId to create from suggestion
     try {
       const response = await fetch(
         `${base_URL}/patients/goals/${patientInfo.id}`,
@@ -623,15 +621,6 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
               disabled={!patientInfo?.id}
             >
               Refresh Summary
-            </button>
-            <button
-              className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-white/80 hover:tw-bg-white"
-              onClick={() => {
-                // TODO: Save summary as journal entry
-              }}
-              disabled={!patientInfo?.id}
-            >
-              Save as a Journal
             </button>
           </div>
         </div>
