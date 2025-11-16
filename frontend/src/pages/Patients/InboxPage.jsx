@@ -56,6 +56,7 @@ export default function InboxPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      console.log("notifications", data);
       setItems(Array.isArray(data) ? data : data.notifications || []);
     } catch (e) {
       setErr(String(e));
@@ -159,15 +160,6 @@ export default function InboxPage() {
           );
         })}
       </ul>
-
-      <div className="tw-mt-4 tw-flex tw-justify-end">
-        <button
-          className="tw-text-sm tw-rounded-xl tw-bg-white tw-border tw-px-3 tw-py-1 hover:tw-bg-white/80"
-          onClick={fetchNotifications}
-        >
-          Refresh
-        </button>
-      </div>
     </div>
   );
 }
