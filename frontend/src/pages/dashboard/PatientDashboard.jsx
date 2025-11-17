@@ -600,18 +600,44 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             </h3>
 
             {patientInfo?.aiSuggestions?.length > 0 ? (
-              <ul className="tw-flex tw-flex-wrap tw-gap-2">
-                {patientInfo.aiSuggestions.map((s) => (
+              <ul className="tw-flex tw-flex-wrap tw-gap-3 tw-mt-3">
+                {patientInfo.aiSuggestions.slice(0, 5).map((s) => (
                   <li
                     key={s.id}
-                    className="tw-text-sm tw-bg-blush-100 tw-text-clay-700 tw-px-3 tw-py-2 tw-rounded-full"
+                    className="
+          tw-max-w-[260px]
+          tw-w-full
+          tw-rounded-2xl
+          tw-bg-white/40
+          tw-backdrop-blur-sm
+          tw-border tw-border-white/40
+          tw-shadow
+          tw-px-4 tw-py-3
+        "
                   >
-                    {s.text}
+                    {(() => {
+                      const [title, desc] = s.suggestion_text.split(/\r?\n/, 2);
+                      return (
+                        <>
+                          <span className="tw-text-[13px] tw-font-semibold tw-text-clay-700 tw-leading-tight">
+                            {title}
+                          </span>
+
+                          {desc && (
+                            <span className="tw-text-[11px] tw-text-cocoa-700 tw-mt-1 tw-block tw-leading-snug">
+                              {desc}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="tw-text-cocoa-700">No suggestions yet.</p>
+              <p className="tw-text-cocoa-700 tw-text-sm">
+                No suggestions yet.
+              </p>
             )}
 
             <div className="tw-mt-4">
