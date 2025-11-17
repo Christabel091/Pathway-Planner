@@ -115,7 +115,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setPatientInfo(data);
-        //then fetch patients clinician info based on clinician_id
+        console.log("patient info", data);
         if (data.clinician_id && data.clinician_id !== 1) {
           const response = await fetch(
             `${base_URL}/onboarding/clinicians/${data.clinician_id}`,
@@ -137,7 +137,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     })();
 
     return () => ctrl.abort();
-  }, [user, base_URL, setPatientsClinician, setPatientInfo, patientInfo]);
+  }, [user, base_URL, setPatientsClinician, setPatientInfo]);
 
   // helper to ack notifications over WS
   const ackNotification = (notificationId) => {
