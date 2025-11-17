@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import { PrismaClient, GoalStatus } from "@prisma/client";
+import { getGoalSuggestionsForPatient } from "./goalAi.js";
 
 const patientRouter = express.Router();
 const prisma = new PrismaClient();
@@ -190,6 +191,17 @@ patientRouter.get("/:userId/labs", async (req, res) => {
   } catch (e) {
     console.error("GET /patients/:userId/labs error", e);
     res.status(500).json({ error: "Failed to fetch labs" });
+  }
+});
+
+patientRouter.get("/goals/:patientId/ai-suggestions", async (req, res) => {
+  const { patientId } = req.params;
+  try {
+    const suggestions = await getGoalSuggestionsForPatient(prisma, parseInt(patientId));
+    res.json({ aiSuggestions: suggestions });
+  } catch (e) {
+    console.error("AI suggestion error:", e);
+    res.status(500).json({ error: "AI suggestion failed" });
   }
 });
 
