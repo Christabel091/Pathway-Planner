@@ -34,15 +34,25 @@ export async function getGoalSuggestionsForPatient(prisma, patientId) {
       : "No active goals.";
 
   const prompt = `
-You are helping a chronic-care patient get a well structured and thought out goal or a plan to achieve their goal.
+You are helping a chronic-care patient create structured, meaningful goals.
 
 Patient chronic conditions: ${patient.chronic_conditions || "Not recorded"}.
 
 Current active goals:
 ${goalLines}
 
-Based on these goals, give 3–5 short, concrete, motivational suggestions
-the patient can work by the given deadline they have mentioned. Use bullet points.
+Return 3–5 NEW suggested goals in the following strict format:
+
+• Title of the goal
+  Description of the goal in 1–2 sentences
+
+RULES:
+- The FIRST line of each suggestion must be the TITLE only.
+- The SECOND line must be the DESCRIPTION only.
+- Separate title and description with exactly ONE newline.
+- No extra newlines between suggestions.
+- No lists within descriptions.
+- Keep everything concise and actionable.
 `.trim();
 
   const response = await openai.responses.create({
@@ -52,4 +62,26 @@ the patient can work by the given deadline they have mentioned. Use bullet point
 
   const text = response.output[0].content[0].text;
   return text;
+}
+
+export async function generateAndStoreGoalSuggestions(
+  prisma,
+  patientId,
+  goalId,
+  triggerReason
+) {
+  const suggestionText = await getGoalSuggestionsForPatient(prisma, patientId);
+  if (!suggestionText) return;
+  console.log("creating ai suggestion for patient", patientId);
+  await prisma.aiSuggestion.create({
+    data: {
+      patient_id: patientId,
+      goal_id: goalId ?? null,
+      suggestion_text: suggestionText,
+      requires_approval: true,
+      trigger_reason: triggerReason ?? null,
+      suggested_delta_pct: null,
+      confidence: null,
+    },
+  });
 }

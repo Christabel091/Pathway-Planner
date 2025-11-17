@@ -1,19 +1,16 @@
 /** @format */
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import ClinicianLabUpload from "../Clinicians/ClinicianLabUpload";
 import { PieChart, Pie, Cell } from "recharts";
-import { connectWebSocket } from "../../utility/webSocket"; // <--- ADDED
+import { connectWebSocket } from "../../utility/webSocket";
 
 const PIE_COLORS = {
-  completedGradientStart: "#C58A78",  // rose-clay
-  completedGradientEnd:   "#C58A78",  // solid
-  remaining:              "#FCEFE8",  // soft peach cream (new)
+  completedGradientStart: "#C58A78", // rose-clay
+  completedGradientEnd: "#C58A78", // solid
+  remaining: "#FCEFE8", // soft peach cream
 };
-
-
 
 const Icons = {
   menu: (cls = "tw-w-6 tw-h-6") => (
@@ -74,6 +71,7 @@ export default function ClinicianDashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const [prefillPatientId, setPrefillPatientId] = useState("");
 
+  // eslint-disable-next-line no-unused-vars
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -84,7 +82,7 @@ export default function ClinicianDashboard() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const [alerts, setAlerts] = useState([]); // <--- NEW: announcements for inbox
+  const [alerts, setAlerts] = useState([]); // announcements for inbox
 
   useEffect(() => {
     let alive = true;
@@ -158,6 +156,7 @@ export default function ClinicianDashboard() {
     }
   }
 
+  // eslint-disable-next-line no-unused-vars
   const totalPatients = patients.length;
   const avgCompletion = useMemo(() => {
     if (!patients.length) return 0;
@@ -172,7 +171,6 @@ export default function ClinicianDashboard() {
     { name: "Remaining", value: 100 - avgCompletion },
   ];
 
-  // --- NEW: WebSocket for ANNOUNCEMENT -> alerts state ---
   const ackNotification = (notificationId) => {
     if (
       notificationId &&
@@ -206,6 +204,22 @@ export default function ClinicianDashboard() {
           ...prev,
         ]);
         ackNotification(p.notificationId);
+        return;
+      }
+
+      if (msg?.type === "GOAL_PENDING") {
+        const p = msg.payload || {};
+        setApprovals((prev) => [
+          {
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            patient: p.patient,
+            submitted: p.submitted,
+          },
+          ...prev,
+        ]);
+        return;
       }
     };
 
@@ -215,7 +229,6 @@ export default function ClinicianDashboard() {
     ) {
       connectWebSocket(user, handleMsg);
     } else {
-      // if socket already open, just add listener
       const ws = window.socketInstance;
       const onMessage = (ev) => {
         let parsed;
@@ -259,7 +272,9 @@ export default function ClinicianDashboard() {
           {Icons.menu()}
           <span className="tw-font-semibold">Menu</span>
         </button>
-        <span className="tw-font-bold tw-text-emerald-700">Pathway Planner</span>
+        <span className="tw-font-bold tw-text-emerald-700">
+          Pathway Planner
+        </span>
         <span className="tw-w-10" />
       </div>
 
@@ -338,7 +353,6 @@ export default function ClinicianDashboard() {
           backgroundAttachment: "fixed",
         }}
       >
-        {/* bg blobs */}
         <div className="tw-pointer-events-none tw-absolute tw-inset-0 tw--z-10">
           <div className="tw-absolute tw-top-24 tw-right-[-6rem] tw-w-[22rem] tw-h-[22rem] tw-rounded-full tw-bg-blush-200/30 tw-blur-3xl" />
           <div className="tw-absolute tw-bottom-16 tw-left-[-4rem] tw-w-[18rem] tw-h-[18rem] tw-rounded-full tw-bg-sand-100/40 tw-blur-3xl" />
@@ -346,7 +360,7 @@ export default function ClinicianDashboard() {
 
         {/* Header */}
         <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
-          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px]  tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
+          <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
             <div>
               <h2 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
                 Welcome
@@ -453,7 +467,10 @@ export default function ClinicianDashboard() {
                       </div>
                       <div className="tw-text-sm">{a.description}</div>
                       <div className="tw-text-xs tw-text-cocoa-600">
-                        {a.patient} • {new Date(a.submitted).toLocaleString()}
+                        {a.patient} •{" "}
+                        {a.submitted
+                          ? new Date(a.submitted).toLocaleString()
+                          : ""}
                       </div>
                       <span className="tw-inline-block tw-mt-1 tw-text-[11px] tw-bg-amber-100 tw-text-amber-800 tw-px-2 tw-py-0.5 tw-rounded-full">
                         pending
@@ -547,8 +564,8 @@ export default function ClinicianDashboard() {
             )}
           </div>
 
-          {/* Patients list (real) */}
-          <div className="tw-rounded-[20px]  tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100  tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
+          {/* Patients list */}
+          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
               Your Patients
             </h3>
@@ -652,7 +669,7 @@ export default function ClinicianDashboard() {
           </div>
 
           {/* Lab Results CTA */}
-          <div className="tw-rounded-[20px] tw-bg-[#D4E8C7]  tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+          <div className="tw-rounded-[20px] tw-bg-[#D4E8C7] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
             </h3>
@@ -675,7 +692,6 @@ export default function ClinicianDashboard() {
         </section>
       </main>
 
-      {/* Upload modal */}
       {showUpload && (
         <div className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center">
           <button

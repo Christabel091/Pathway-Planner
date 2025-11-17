@@ -8,9 +8,9 @@ import AddClinicianModal from "../../components/AddClinicanModal";
 import { connectWebSocket } from "../../utility/webSocket";
 
 const PIE_COLORS = {
-  completedGradientStart: "#76B28C",   // soft emerald
-  completedGradientEnd: "#A1D5BA",     // mint highlight
-  remaining: "#F7E8CF",                // soft cream/peach
+  completedGradientStart: "#76B28C", // soft emerald
+  completedGradientEnd: "#A1D5BA", // mint highlight
+  remaining: "#F7E8CF", // soft cream/peach
 };
 // Simple inline SVG icons (no extra deps)
 const Icons = {
@@ -137,7 +137,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     })();
 
     return () => ctrl.abort();
-  }, [user, base_URL, setPatientsClinician, setPatientInfo]);
+  }, [user, base_URL, setPatientsClinician, setPatientInfo, patientInfo]);
 
   // helper to ack notifications over WS
   const ackNotification = (notificationId) => {
@@ -274,7 +274,9 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           {Icons.menu()}
           <span className="tw-font-semibold">Menu</span>
         </button>
-        <span className="tw-font-bold tw-text-emerald-700">Pathway Planner</span>
+        <span className="tw-font-bold tw-text-emerald-700">
+          Pathway Planner
+        </span>
         <span className="tw-w-10" />
       </div>
 
@@ -592,7 +594,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </div>
 
           {/* Suggested Goals (AI) */}
-          <div className= "tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
+          <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-shadow-soft tw-p-6 tw-col-span-1 xl:tw-col-span-2">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
               Suggested Goals (AI)
             </h3>

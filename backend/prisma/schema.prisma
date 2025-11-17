@@ -166,18 +166,18 @@ model LabResult {
 }
 
 model Medicine {
-  id               Int              @id @default(autoincrement())
-  patient_id       Int
-  medicine_name    String?          @db.VarChar(200)
-  taken            Boolean?         @default(false)
-  taken_at         DateTime?        @default(now()) @db.DateTime(0)
-  patient_daily_id Int?
-  patientDaily     PatientDailyLog? @relation(fields: [patient_daily_id], references: [id], onUpdate: NoAction, map: "fk_medicine_daily")
-  patient          Patient          @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_medicine_patient")
+  id             Int       @id @default(autoincrement())
+  patient_id     Int
+  medicine_name  String    @db.VarChar(200)
+  dosage         String?   @db.VarChar(100)
+  frequency      String?   @db.VarChar(100)
+  preferred_time String?   @db.VarChar(20)
+  instructions   String?   @db.VarChar(500)
+  taken          Boolean   @default(false)
+  taken_at       DateTime? @default(now())
 
-  @@index([patient_id], map: "fk_medicine_patient")
-  @@index([patient_daily_id], map: "idx_medicine_daily")
-  @@map("medicine")
+  patient Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  @@index([patient_id])
 }
 
 model AiSuggestion {
@@ -187,6 +187,8 @@ model AiSuggestion {
   suggested_delta_pct Decimal?  @db.Decimal(6, 2)
   confidence          Decimal?  @db.Decimal(5, 2)
   requires_approval   Boolean?  @default(false)
+  suggestion_text     String?   @db.Text            // <-- add this
+  trigger_reason      String?   @db.VarChar(64)     // <-- optional but useful
   created_at          DateTime? @default(now()) @db.DateTime(0)
   goal                Goal?     @relation(fields: [goal_id], references: [id], onUpdate: NoAction, map: "fk_ai_goal")
   patient             Patient   @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ai_patient")
@@ -208,7 +210,6 @@ model PatientDailyLog {
   meals       String?    @db.Text
   mood        Int?       @db.TinyInt
   symptoms    String?    @db.Text
-  medicines   Medicine[]
   patient     Patient    @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pdm_patient")
 
   @@unique([patient_id, day_date], name: "uq_pdm_patient_day", map: "uq_pdm_patient_day")

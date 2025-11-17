@@ -16,7 +16,8 @@ import createAdminRouter from "./routes/admin.js";
 
 const prisma = new PrismaClient();
 const app = express();
-//middlewares
+
+// middlewares
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
@@ -40,7 +41,6 @@ const socketsByUser = new Map();
 function heartbeat() {
   this.isAlive = true;
 }
-// index.js
 
 wss.on("connection", (ws) => {
   ws.isAlive = true;
@@ -121,9 +121,11 @@ function emitToUser(userId, payload) {
   }
   return sent;
 }
+
 const adminRouter = createAdminRouter(prisma, emitToUser);
 app.use("/admin", adminRouter);
-// map patient_id -> user_id
+
+// map patient_id -> user_id (for patient)
 async function getPatientUserId(patientId) {
   const p = await prisma.patient.findUnique({
     where: { id: Number(patientId) },
@@ -131,7 +133,62 @@ async function getPatientUserId(patientId) {
   });
   return p?.user_id ?? null;
 }
-//create lab result for patient and send in real time
+
+// helper: emit new pending goal to clinician in real-time
+async function emitPendingGoalToClinician(goalId) {
+  const goal = await prisma.goal.findUnique({
+    where: { id: Number(goalId) },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      status: true,
+      created_at: true,
+      patient: {
+        select: {
+          full_name: true,
+          clinician: {
+            select: {
+              user_id: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!goal) {
+    console.warn("emitPendingGoalToClinician: goal not found", goalId);
+    return;
+  }
+
+  if (goal.status !== "pending_approval") {
+    // only care about goals that actually need approval
+    return;
+  }
+
+  const clinicianUserId = goal.patient?.clinician?.user_id;
+  if (!clinicianUserId) {
+    console.warn(
+      "emitPendingGoalToClinician: no clinician user for goal",
+      goalId
+    );
+    return;
+  }
+
+  emitToUser(clinicianUserId, {
+    type: "GOAL_PENDING",
+    payload: {
+      id: goal.id,
+      title: goal.title,
+      description: goal.description,
+      patient: goal.patient.full_name,
+      submitted: goal.created_at,
+    },
+  });
+}
+
+// create lab result for patient and send in real time
 app.post("/labs", async (req, res) => {
   try {
     const { patientId, lab_type, lab_value, unit, source, file_url } =
@@ -187,6 +244,22 @@ app.post("/labs", async (req, res) => {
   } catch (e) {
     console.error("POST /labs error", e);
     return res.status(500).json({ error: "Failed to create lab" });
+  }
+});
+
+// realtime: notify clinician about a new pending goal
+app.post("/realtime/pending-goal", async (req, res) => {
+  try {
+    const { goalId } = req.body || {};
+    if (!goalId) {
+      return res.status(400).json({ error: "goalId is required" });
+    }
+
+    await emitPendingGoalToClinician(goalId);
+    return res.status(204).end();
+  } catch (e) {
+    console.error("POST /realtime/pending-goal error", e);
+    return res.status(500).json({ error: "Failed to notify clinician" });
   }
 });
 
