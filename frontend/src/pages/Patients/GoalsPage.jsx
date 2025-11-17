@@ -24,9 +24,6 @@ const statusBadge = (status) => {
   return map[status] || "tw-bg-white tw-text-cocoa-700 tw-border";
 };
 
-/* =========================================================
-   Create Goal Modal (front-end only; wire your API at TODOs)
-   ========================================================= */
 function CreateGoalModal({
   onClose,
   onCreated,
@@ -53,7 +50,6 @@ function CreateGoalModal({
     if (!patientInfo?.id) return;
     setSubmitting(true);
     try {
-      // TODO: secure POST; ensure auth cookies/headers as needed
       const response = await fetch(
         `${base_URL}/patients/goals/${patientInfo.id}`,
         {
@@ -244,12 +240,25 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [filter, setFilter] = useState("all"); // all | active | completed | pending
 
-  /* Hydrate AI suggestions from patientInfo if present */
   useEffect(() => {
     if (patientInfo?.aiSuggestions) {
       setAiSuggestions(patientInfo.aiSuggestions);
     }
   }, [patientInfo]);
+
+  /* Helper: notify clinician in real-time about a new pending goal */
+  const notifyClinicianPendingGoal = async (goal) => {
+    if (!goal?.id) return;
+    try {
+      await fetch(`${base_URL}/realtime/pending-goal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goalId: goal.id }),
+      });
+    } catch (e) {
+      console.error("Failed to notify clinician about pending goal:", e);
+    }
+  };
 
   /* Fetch goals for this patient */
   useEffect(() => {
@@ -308,10 +317,14 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
     return { totalGoals: total, completedGoals: done, percentComplete: pct };
   }, [goals]);
 
-  const onCreated = (goal) => setGoals((gs) => [goal, ...gs]);
+  const onCreated = (goal) => {
+    setGoals((gs) => [goal, ...gs]);
+    if (goal?.status === "pending_approval") {
+      notifyClinicianPendingGoal(goal);
+    }
+  };
 
   const onToggleComplete = async (goal) => {
-    // TODO: PATCH /patients/goals/:id (toggle completed/status)
     try {
       const response = await fetch(`${base_URL}/patients/goals/${goal.id}`, {
         method: "PATCH",
@@ -354,7 +367,6 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
   };
 
   const onDelete = async (goal) => {
-    // TODO: DELETE /patients/goals/:id
     try {
       const response = await fetch(`${base_URL}/patients/goals/${goal.id}`, {
         method: "DELETE",
@@ -373,6 +385,14 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
 
   const addSuggestionAsDraft = async (s) => {
     if (!patientInfo?.id) return;
+
+    const [rawTitle, rawDescription] = s.suggestion_text.split(/\r?\n/, 2);
+
+    const title = rawTitle?.trim() || "AI Goal";
+    const description = `AI-suggested goal: ${
+      rawDescription?.trim() || ""
+    }`.trim();
+
     try {
       const response = await fetch(
         `${base_URL}/patients/goals/${patientInfo.id}`,
@@ -380,19 +400,26 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: s.text,
-            description: "AI-suggested goal",
+            title,
+            description,
             status: "pending_approval",
+            aiSuggestionId: s.id,
           }),
         }
       );
+
       if (!response.ok) {
         setMessageType("error");
         setMessage("Could not add suggested goal.");
         return;
       }
+
       const draft = await response.json();
       setGoals((gs) => [draft, ...gs]);
+
+      if (draft?.status === "pending_approval") {
+        notifyClinicianPendingGoal(draft);
+      }
     } catch (e) {
       setMessageType("error");
       setMessage("Could not add suggested goal.");
@@ -415,7 +442,6 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
           aria-label="Back to dashboard"
           title="Back to dashboard"
         >
-          {/* simple left arrow icon */}
           <svg
             className="tw-w-5 tw-h-5"
             viewBox="0 0 24 24"
@@ -576,17 +602,57 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
         <h2 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
           AI-Suggested Goals
         </h2>
+
         {aiSuggestions?.length ? (
-          <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-3">
+          <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
             {aiSuggestions.map((s) => (
               <div
                 key={s.id ?? s.text}
-                className="tw-flex tw-items-center tw-justify-between tw-rounded-2xl tw-bg-white tw-shadow-soft tw-border tw-border-white/60 tw-p-3"
+                className="
+                  tw-flex tw-flex-col tw-gap-2
+                  tw-rounded-[20px]
+                  tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100
+                  tw-backdrop-blur-md
+                  tw-border tw-border-white/60
+                  tw-shadow-soft
+                  tw-p-4
+                "
               >
-                <span className="tw-text-sm tw-text-clay-700">{s.text}</span>
+                {(() => {
+                  const [title, description] = s.suggestion_text.split(
+                    /\r?\n/,
+                    2
+                  );
+
+                  return (
+                    <div>
+                      <div className="tw-font-semibold tw-text-sm tw-text-clay-700">
+                        {title}
+                      </div>
+                      <div className="tw-text-xs tw-text-cocoa-700 tw-mt-1">
+                        {description}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {s.trigger_reason && (
+                  <div className="tw-text-xs tw-text-clay-600 tw-mt-1 tw-italic">
+                    Why you’re seeing this:{" "}
+                    <span className="tw-font-medium">
+                      {s.trigger_reason.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                )}
+
                 <button
                   onClick={() => addSuggestionAsDraft(s)}
-                  className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-600 tw-text-white hover:tw-bg-clay-700"
+                  className="
+                    tw-text-xs tw-rounded-full tw-px-3 tw-py-1
+                    tw-bg-clay-600 tw-text-white
+                    hover:tw-bg-clay-700
+                    tw-self-start tw-mt-2
+                  "
                   disabled={!patientInfo?.id}
                 >
                   Add as draft
@@ -599,41 +665,12 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
         )}
       </section>
 
-      {/* AI Summary (weekly snapshot) */}
-      <section className="tw-mb-2">
-        <h2 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-3">
-          AI Summary
-        </h2>
-        <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-amber-100 tw-via-amber-50 tw-to-emerald-100 tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-4">
-          {aiSummary ? (
-            <p className="tw-text-sm tw-text-cocoa-700">{aiSummary}</p>
-          ) : (
-            <p className="tw-text-sm tw-text-cocoa-700">
-              No summary yet. {/* TODO: fetch from your AI endpoint */}
-            </p>
-          )}
-          <div className="tw-flex tw-gap-2 tw-mt-3">
-            <button
-              className="tw-text-xs tw-rounded-full tw-px-3 tw-py-1 tw-bg-clay-400 tw-text-white hover:tw-bg-clay-600"
-              onClick={() => {
-                // TODO: POST /ai/goals/summary?patient_id=...
-              }}
-              disabled={!patientInfo?.id}
-            >
-              Refresh Summary
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Supportive note for long-term/terminal illness */}
-      <div className="tw-mt-4 tw-text-xs tw-text-cocoa-700 tw-bg-white/60 tw-border tw-border-white/60 tw-rounded-2xl tw-p-3">
+      <div className="tw-mt-4 tw-text-xs tw-text-cocoa-700 tw-bg-white tw-rounded-2xl tw-shadow-xl tw-p-4">
         For long-term or terminal illness, prioritize comfort, safety,
         hydration, rest, and connection. Let goals flex with how you feel
         day-to-day. Invite your relative and clinician to adjust together.
       </div>
 
-      {/* Create Goal Modal */}
       {showCreate && patientInfo?.id && (
         <CreateGoalModal
           onClose={() => setShowCreate(false)}

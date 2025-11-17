@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import { PrismaClient, GoalStatus } from "@prisma/client";
-import { getGoalSuggestionsForPatient } from "./goalAi.js";
+import { generateAndStoreGoalSuggestions } from "./goalAi.js";
 
 const patientRouter = express.Router();
 const prisma = new PrismaClient();
@@ -43,19 +43,31 @@ const mapGoalStatus = (status) => {
 };
 patientRouter.post("/goals/:patientId", async (req, res) => {
   const { patientId } = req.params;
-  const { title, description, status, due_date } = req.body;
+  const { title, description, status, due_date, aiSuggestionId } = req.body;
+
   try {
-    //update goalStatus enum in prisma schema if new statuses are added
     const newGoal = await prisma.goal.create({
       data: {
-        patient_id: parseInt(patientId),
+        patient_id: parseInt(patientId, 10),
         title,
         description,
         status: mapGoalStatus(status) || "active",
-
         due_date: due_date ? new Date(due_date) : null,
       },
     });
+    if (aiSuggestionId) {
+      try {
+        await prisma.aiSuggestion.delete({
+          where: { id: Number(aiSuggestionId) },
+        });
+      } catch (err) {
+        console.warn(
+          `Failed to delete AiSuggestion id=${aiSuggestionId} after goal creation`,
+          err
+        );
+      }
+    }
+
     res.status(201).json(newGoal);
   } catch (error) {
     console.error("Error creating goal:", error);
@@ -92,19 +104,22 @@ patientRouter.delete("/goals/:goalId", async (req, res) => {
 });
 
 patientRouter.patch("/goals/:goalId", async (req, res) => {
+  console.log("changing goal status");
   const { goalId } = req.params;
   const { status, completed } = req.body;
 
   try {
     const id = parseInt(goalId, 10);
 
-    // 1) Get the current goal (old status + patient)
+    // 1) Get the current goal (old state)
     const existingGoal = await prisma.goal.findUnique({
       where: { id },
       select: {
         status: true,
         patient_id: true,
         title: true,
+        completed: true,
+        due_date: true,
       },
     });
 
@@ -114,22 +129,55 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
 
     const mappedStatus = status ? mapGoalStatus(status) : undefined;
 
-    // 2) Decide *before* update if we should send a GOAL_APPROVED notification
-    const shouldNotifyGoalApproved =
+    //triger flags for ai suggestions
+    // clinician approves goal
+    const isClinicianApproval =
       mappedStatus &&
       existingGoal.status === "pending_approval" &&
       mappedStatus === "active";
 
-    // 3) Update the goal
+    // clinician denies goal
+    const isClinicianDenial =
+      mappedStatus &&
+      existingGoal.status === "pending_approval" &&
+      (mappedStatus === "cancelled" || mappedStatus === "ejected");
+
+    // patient completes goal now
+    const isCompletingNow =
+      typeof completed === "boolean" &&
+      completed === true &&
+      existingGoal.completed === false;
+
+    // early / late completion (only meaningful if we have a due_date)
+    let isEarlyCompletion = false;
+    let isLateCompletion = false;
+
+    if (isCompletingNow && existingGoal.due_date) {
+      const now = new Date();
+      const due = new Date(existingGoal.due_date);
+
+      if (now < due) {
+        isEarlyCompletion = true;
+      } else if (now > due) {
+        isLateCompletion = true;
+      }
+      // If you want a “grace period”, add thresholds here.
+    }
+
+    const shouldTriggerAiOnCompletion =
+      isCompletingNow && (isEarlyCompletion || isLateCompletion);
+
+    // 2) Update the goal
     const updatedGoal = await prisma.goal.update({
       where: { id },
       data: {
         status: mappedStatus,
-        completed: completed !== undefined ? completed : undefined,
+        completed: typeof completed === "boolean" ? completed : undefined,
       },
     });
 
-    if (shouldNotifyGoalApproved) {
+    // 3) Notification on approval (your existing logic)
+    if (isClinicianApproval) {
       const patient = await prisma.patient.findUnique({
         where: { id: existingGoal.patient_id },
         select: { user_id: true },
@@ -142,10 +190,10 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
       } else {
         await prisma.notification.create({
           data: {
-            user_id: patient.user_id, // actual User.id
+            user_id: patient.user_id,
             type: "GOAL_APPROVED",
             entity: "goal",
-            entity_id: updatedGoal.id, // or just `id`, same value
+            entity_id: updatedGoal.id,
             payload: {
               title: `Your goal "${existingGoal.title}" has been approved by your clinician.`,
               message: "go to goals page to see more details",
@@ -153,6 +201,41 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
           },
         });
       }
+    }
+
+    // 4) AI suggestions triggers
+    if (isClinicianApproval) {
+      console.log("calling goalai func 1");
+      await generateAndStoreGoalSuggestions(
+        prisma,
+        existingGoal.patient_id,
+        updatedGoal.id,
+        "clinician_approved_goal"
+      );
+    }
+
+    if (isClinicianDenial) {
+      console.log("calling goalai func 2");
+      await generateAndStoreGoalSuggestions(
+        prisma,
+        existingGoal.patient_id,
+        updatedGoal.id,
+        "clinician_denied_goal"
+      );
+    }
+
+    if (shouldTriggerAiOnCompletion) {
+      console.log("calling goalai func 3");
+      const reason = isEarlyCompletion
+        ? "goal_completed_early"
+        : "goal_completed_late";
+
+      await generateAndStoreGoalSuggestions(
+        prisma,
+        existingGoal.patient_id,
+        updatedGoal.id,
+        reason
+      );
     }
 
     return res.json(updatedGoal);
@@ -191,17 +274,6 @@ patientRouter.get("/:userId/labs", async (req, res) => {
   } catch (e) {
     console.error("GET /patients/:userId/labs error", e);
     res.status(500).json({ error: "Failed to fetch labs" });
-  }
-});
-
-patientRouter.get("/goals/:patientId/ai-suggestions", async (req, res) => {
-  const { patientId } = req.params;
-  try {
-    const suggestions = await getGoalSuggestionsForPatient(prisma, parseInt(patientId));
-    res.json({ aiSuggestions: suggestions });
-  } catch (e) {
-    console.error("AI suggestion error:", e);
-    res.status(500).json({ error: "AI suggestion failed" });
   }
 });
 
