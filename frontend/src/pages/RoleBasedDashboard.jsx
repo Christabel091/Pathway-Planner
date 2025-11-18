@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import "../styles/tailwind/dashboard.css";
+import "../styles/tailwind/Dashboard.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
