@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo, use } from "react";
 import { useAuth } from "../../components/AuthContext";
 import { PieChart, Pie, Cell } from "recharts";
-import "../../styles/tailwind/dashboard.css";
+import "../../styles/tailwind/Dashboard.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AddClinicianModal from "../../components/AddClinicanModal";
 import { connectWebSocket } from "../../utility/webSocket";
