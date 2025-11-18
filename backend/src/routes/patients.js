@@ -323,9 +323,6 @@ patientRouter.get("/by-patient/:patientId/medications", async (req, res) => {
   }
 });
 
-/* -------------------------------------------------------
-   3) CLINICIAN: Assign medication TO patient (patientId)
--------------------------------------------------------- */
 patientRouter.post("/:patientId/medications", async (req, res) => {
   try {
     const patientId = Number(req.params.patientId);
@@ -378,9 +375,6 @@ patientRouter.post("/:patientId/medications", async (req, res) => {
   }
 });
 
-/* -------------------------------------------------------
-   4) DELETE a medication (clinician or patient)
--------------------------------------------------------- */
 patientRouter.delete("/medications/:medId", async (req, res) => {
   try {
     const medId = Number(req.params.medId);
@@ -393,6 +387,44 @@ patientRouter.delete("/medications/:medId", async (req, res) => {
   } catch (err) {
     console.error("Error deleting medication:", err);
     res.status(500).json({ error: "Failed to delete medication" });
+  }
+});
+
+// Delete a lab record
+patientRouter.delete("/labs/:labId", async (req, res) => {
+  const { labId } = req.params;
+
+  try {
+    await prisma.labResult.delete({
+      where: { id: Number(labId) },
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    // Prisma 'record not found'
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Lab not found" });
+    }
+
+    console.error("Error deleting lab:", err);
+    res.status(500).json({ error: "Failed to delete lab" });
+  }
+});
+
+// Get labs for a specific patient (by patient primary key) for clinician view
+patientRouter.get("/by-patient/:patientId/labs", async (req, res) => {
+  const { patientId } = req.params;
+
+  try {
+    const labs = await prisma.labResult.findMany({
+      where: { patient_id: Number(patientId) },
+      orderBy: { created_at: "desc" },
+    });
+
+    res.json({ labs });
+  } catch (err) {
+    console.error("Error fetching labs for patient:", err);
+    res.status(500).json({ error: "Failed to load lab results" });
   }
 });
 

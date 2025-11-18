@@ -264,7 +264,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
 
   return (
     <div className="tw-flex tw-min-h-screen tw-text-cocoa-700">
-      {/* ---- MOBILE TOP BAR (shows on <lg) ---- */}
       <div className="tw-fixed tw-top-0 tw-left-0 tw-right-0 tw-z-30 tw-flex tw-items-center tw-justify-between tw-bg-white/80 tw-backdrop-blur tw-border-b tw-border-white/60 tw-px-4 tw-py-3 lg:tw-hidden">
         <button
           onClick={() => setMobileOpen(true)}
@@ -574,10 +573,10 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               </span>
             </div>
             <p className="tw-mt-2 tw-mb-3">Stay on track with your schedule.</p>
-            <button 
+            <button
               className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
               onClick={() => navigate("/dashboard/medications")}
-              >
+            >
               View Schedule
             </button>
           </div>
