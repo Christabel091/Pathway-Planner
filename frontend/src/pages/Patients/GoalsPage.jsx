@@ -231,7 +231,6 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
   const navigate = useNavigate();
   const [goals, setGoals] = useState([]);
   const [aiSuggestions, setAiSuggestions] = useState([]);
-  const [aiSummary, setAiSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const base_URL = import.meta.env.VITE_BACKEND_URL;
   const [message, setMessage] = useState("");
@@ -239,6 +238,29 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
 
   const [showCreate, setShowCreate] = useState(false);
   const [filter, setFilter] = useState("all"); // all | active | completed | pending
+  const [resolvedPatientId, setResolvedPatientId] = useState(null);
+
+  useEffect(() => {
+    if (patientInfo?.id) {
+      const id = Number(patientInfo.id);
+      setResolvedPatientId(id);
+      try {
+        window.localStorage.setItem("pp_patient_id", String(id));
+      } catch {
+        // ignore storage errors
+      }
+    } else {
+      // fallback on refresh
+      try {
+        const stored = window.localStorage.getItem("pp_patient_id");
+        if (stored) {
+          setResolvedPatientId(Number(stored));
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [patientInfo?.id]);
 
   useEffect(() => {
     if (patientInfo?.aiSuggestions) {
@@ -260,14 +282,14 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
     }
   };
 
-  /* Fetch goals for this patient */
+  /* Fetch goals for this patient, using resolvedPatientId */
   useEffect(() => {
-    if (!patientInfo?.id) return;
+    if (!resolvedPatientId) return;
     const fetchGoals = async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `${base_URL}/patients/goals/${patientInfo.id}`
+          `${base_URL}/patients/goals/${resolvedPatientId}`
         );
         if (!response.ok) {
           setMessageType("error");
@@ -285,7 +307,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
       }
     };
     fetchGoals();
-  }, [patientInfo?.id, base_URL]);
+  }, [resolvedPatientId, base_URL]);
 
   const filteredGoals = useMemo(() => {
     if (!goals?.length) return [];
@@ -384,7 +406,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
   };
 
   const addSuggestionAsDraft = async (s) => {
-    if (!patientInfo?.id) return;
+    if (!resolvedPatientId) return;
 
     const [rawTitle, rawDescription] = s.suggestion_text.split(/\r?\n/, 2);
 
@@ -395,7 +417,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
 
     try {
       const response = await fetch(
-        `${base_URL}/patients/goals/${patientInfo.id}`,
+        `${base_URL}/patients/goals/${resolvedPatientId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -468,8 +490,8 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
           <button
             onClick={() => setShowCreate(true)}
             className="tw-bg-clay-400 hover:tw-bg-clay-600 tw-text-white tw-rounded-xl tw-px-4 tw-py-2 tw-shadow"
-            disabled={!patientInfo?.id}
-            title={!patientInfo?.id ? "Patient not loaded yet" : ""}
+            disabled={!resolvedPatientId}
+            title={!resolvedPatientId ? "Patient not loaded yet" : ""}
           >
             + Create Goal
           </button>
@@ -653,7 +675,7 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
                     hover:tw-bg-clay-700
                     tw-self-start tw-mt-2
                   "
-                  disabled={!patientInfo?.id}
+                  disabled={!resolvedPatientId}
                 >
                   Add as draft
                 </button>
@@ -671,11 +693,11 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
         day-to-day. Invite your relative and clinician to adjust together.
       </div>
 
-      {showCreate && patientInfo?.id && (
+      {showCreate && resolvedPatientId && (
         <CreateGoalModal
           onClose={() => setShowCreate(false)}
           onCreated={onCreated}
-          patientInfo={patientInfo}
+          patientInfo={{ ...patientInfo, id: resolvedPatientId }}
           setPatientInfo={setPatientInfo}
           setMessage={setMessage}
           setMessageType={setMessageType}

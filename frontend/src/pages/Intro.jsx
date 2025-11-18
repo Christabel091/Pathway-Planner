@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import "../styles/legacy/Pages.css";
-import "../styles/legacy/intro.css";
+import "../styles/legacy/Intro.css";
 
 export default function Intro() {
   const navigate = useNavigate();
