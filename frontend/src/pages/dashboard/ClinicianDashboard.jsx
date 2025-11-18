@@ -268,7 +268,15 @@ export default function ClinicianDashboard() {
         </div>
 
         <div className="tw-space-y-8">
+          {/* Emerald title */}
+          <div className="tw-flex tw-items-center tw-justify-between">
+            <h1 className="tw-text-3xl md:tw-text-4xl tw-font-semibold tw-text-transparent tw-bg-clip-text tw-bg-gradient-to-r tw-from-emerald-700 tw-via-emerald-500 tw-to-teal-400">
+              Pathway Planner
+            </h1>
+          </div>
+
           {/* Header row */}
+
           <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
             <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
               <div>
@@ -635,15 +643,18 @@ export default function ClinicianDashboard() {
                 >
                   Upload Lab
                 </button>
-                <button className="tw-bg-white/80 hover:tw-bg-white tw-px-4 tw-py-2 tw-rounded-xl">
-                  Review
+                <button
+                  onClick={() => navigate("/dashboard/clinician/labs-review")}
+                  className="tw-bg-white/80 hover:tw-bg-white tw-px-4 tw-py-2 tw-rounded-xl"
+                >
+                  Review Labs
                 </button>
               </div>
             </div>
 
             {/* Account & session controls */}
-            <div className="tw-rounded-[20px] tw-bg-white/80 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
-              <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+            <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-emerald-50 tw-via-emerald-100 tw-to-emerald-200 tw-border tw-border-white/60 tw-backdrop-blur tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+              <h3 className="tw-text-lg tw-font-semibold tw-text-clay-800 tw-mb-2">
                 Account & Session
               </h3>
               <p className="tw-text-sm tw-text-cocoa-700 tw-mb-3">
@@ -658,7 +669,7 @@ export default function ClinicianDashboard() {
                   <span>Account Settings</span>
                 </button>
                 <button
-                  className="tw-flex tw-items-center tw-gap-2 tw-bg-white hover:tw-bg-blush-100 tw-text-clay-700 tw-px-4 tw-py-2 tw-rounded-xl tw-border tw-border-clay-200"
+                  className="tw-flex tw-items-center tw-gap-2 tw-bg-white/90 hover:tw-bg-white tw-text-clay-700 tw-px-4 tw-py-2 tw-rounded-xl tw-border tw-border-clay-200"
                   onClick={handleLogout}
                 >
                   {Icons.logout("tw-w-4 tw-h-4")}
