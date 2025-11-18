@@ -1,3 +1,174 @@
+Elif
+elif.nalan
+Invisible
+
+Elif — 8/29/2025 12:37 PM
+Christabel — 8/29/2025 12:38 PM
+https://discord.gg/5UZqXUG2
+Christabel — 9/3/2025 6:23 PM
+https://discord.gg/HVcJ98wT
+Elif — 9/21/2025 6:05 PM
+are we waiting for people? did i miss something
+Elif — 10/6/2025 6:18 PM
+\section{Project Overview}
+
+\subsection{Purpose}
+\textit{Pathway Planner} is a full-stack digital health management platform designed to assist individuals living with chronic illnesses such as diabetes, arthritis, and polycystic ovary syndrome (PCOS). These conditions require long-term adherence to complex care routines involving diet management, medication adherence, and lifestyle monitoring. Many patients experience difficulty maintaining motivation and consistency, which can lead to decreased quality of care and increased healthcare burden.
+
+The primary objective of \textit{Pathway Planner} is to provide a cohesive digital solution that connects \textbf{patients}, \textbf{clinicians}, and \textbf{care partners} within a unified web-based platform. By integrating AI-driven motivational feedback, goal tracking, and clinician oversight, the system aims to enhance patient engagement, improve adherence, and foster collaborative chronic care management.
+Expand
+message.txt
+6 KB
+https://www.overleaf.com/latex/templates/ieee-access-latex-template/cdxrhtbjgszv
+Elif — 10:38 PM
+can you send me the working database
+and change the medication section here
+model Medicine {
+  id             Int       @id @default(autoincrement())
+  patient_id     Int
+  medicine_name  String    @db.VarChar(200)
+  dosage         String?   @db.VarChar(100)
+  frequency      String?   @db.VarChar(100)
+  preferred_time String?   @db.VarChar(20)
+  instructions   String?   @db.VarChar(500)
+  taken          Boolean   @default(false)
+  taken_at       DateTime? @default(now())
+
+  patient Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+
+  @@index([patient_id])
+Christabel — 10:58 PM
+yh
+one sec
+Christabel — 11:05 PM
+so for it to work i linked medicine to patient dailylog table
+so we can unlink them or just add the foreugnkey to medicine table that links them
+which option matches what you have in mind?
+Christabel — 11:24 PM
+hey so replace old schema with this
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int            @id @default(autoincrement())
+  email            String         @unique(map: "email") @db.VarChar(150)
+  UserName         String         @db.VarChar(150)
+  password_hash    String         @db.VarChar(72)
+  role             Role
+  created_at       DateTime?      @default(now()) @db.DateTime(0)
+  updated_at       DateTime?      @default(now()) @updatedAt @db.DateTime(0)
+  profileCompleted Boolean        @default(false)
+  Caretaker        Caretaker?
+  Clinician        Clinician?
+  notifications    Notification[]
+  Patient          Patient?
+
+  @@map("users")
+}
+
+model Patient {
+  id                     Int                @id @default(autoincrement())
+  user_id                Int                @unique(map: "uq_patients_user")
+  clinician_id           Int                @map("clinician_id")
+  full_name              String             @db.VarChar(150)
+  dob                    DateTime           @db.Date
+  gender                 Gender?            @default(prefer_not_say)
+  phone_number           String?            @db.VarChar(20)
+  address                String?            @db.VarChar(255)
+  relative_contact_name  String?            @db.VarChar(150)
+  relative_contact_email String?            @db.VarChar(150)
+  relative_contact_phone String?            @db.VarChar(20)
+  blood_type             BloodType?
+  allergies              String?            @db.Text
+  chronic_conditions     String?            @db.Text
+  current_medications    String?            @db.Text
+  height_cm              Decimal?           @db.Decimal(5, 2)
+  weight_kg              Decimal?           @db.Decimal(5, 2)
+  created_at             DateTime?          @default(now()) @db.DateTime(0)
+  updated_at             DateTime?          @default(now()) @updatedAt @db.DateTime(0)
+  aiSuggestions          AiSuggestion[]
+  goals                  Goal[]
+  labs                   LabResult[]
+  medicines              Medicine[]
+  caretakerLinks         PatientCaretaker[]
+  dailyLogs              PatientDailyLog[]
+  clinician              Clinician          @relation(fields: [clinician_id], references: [id], onUpdate: NoAction, map: "fk_patients_clinician")
+  user                   User               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_patients_user")
+
+  @@index([clinician_id], map: "idx_patients_clinician")
+  @@map("patients")
+}
+
+model Clinician {
+  id              Int       @id @default(autoincrement())
+  user_id         Int       @unique(map: "uq_clinicians_user")
+  full_name       String    @db.VarChar(150)
+  specialty       String?   @db.VarChar(120)
+  license_number  String?   @db.VarChar(100)
+  clinic_name     String?   @db.VarChar(150)
+  contact_email   String?   @db.VarChar(150)
+  contact_phone   String?   @db.VarChar(20)
+  office_address  String?   @db.VarChar(255)
+  created_at      DateTime? @default(now()) @db.DateTime(0)
+  updated_at      DateTime? @default(now()) @updatedAt @db.DateTime(0)
+  inviteCode      String    @unique
+  inviteUpdatedAt DateTime  @default(now())
+  user            User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_clinicians_user")
+  patients        Patient[]
+
+  @@map("clinicians")
+}
+
+model Caretaker {
+  id           Int                @id @default(autoincrement())
+  user_id      Int                @unique(map: "uq_caretakers_user")
+  full_name    String             @db.VarChar(150)
+  relationship String?            @db.VarChar(80)
+  phone_number String?            @db.VarChar(20)
+  created_at   DateTime?          @default(now()) @db.DateTime(0)
+  updated_at   DateTime?          @default(now()) @updatedAt @db.DateTime(0)
+  user         User               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_caretakers_user")
+  patientLinks PatientCaretaker[]
+
+  @@map("caretakers")
+}
+
+model Notification {
+  id           Int              @id @default(autoincrement())
+  user_id      Int
+  type         NotificationType
+  entity       String?          @db.VarChar(64)
+  entity_id    Int?
+  payload      Json?
+... (165 lines left)
+Collapse
+message.txt
+10 KB
+but before you run npx prisma db push
+because we had an old foreign key via sql, we need to remove it so run
+these
+USE pathway_planner;
+
+ALTER TABLE medicine
+  DROP FOREIGN KEY Medicine_patient_id_fkey;
+
+ALTER TABLE medicine
+  DROP INDEX Medicine_patient_id_fkey;
+then
+npx prisma db push
+Elif — 11:25 PM
+in mysql?
+Christabel — 11:25 PM
+yeah
+﻿
+Christabel
+christabel0996
 generator client {
   provider = "prisma-client-js"
 }

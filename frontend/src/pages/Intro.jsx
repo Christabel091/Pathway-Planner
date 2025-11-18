@@ -77,7 +77,7 @@ export default function Intro() {
             aria-label="Continue to next page"
           >
             <span className="arrow" aria-hidden>
-              →
+              ♡
             </span>
           </button>
         </main>

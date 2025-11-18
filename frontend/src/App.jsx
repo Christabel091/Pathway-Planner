@@ -17,6 +17,8 @@ import CaretakerDashboard from "./pages/dashboard/CaretakerDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import LabsPage from "./pages/Patients/LabsPage";
 import MedicationsPage from "./pages/Patients/MedicationsPage";
+import ClinicianMedUpdate from "./pages/Clinicians/ClinicianMedUpdate";
+import ClinicianMedReview from "./pages/Clinicians/ClinicianMedReview";
 import Account from "./pages/Patients/Account";
 import DailyLogsPage from "./pages/Patients/DailyLogsPage";
 import InboxPage from "./pages/Patients/InboxPage";
@@ -137,6 +139,11 @@ function AppRoutes() {
               }
             />
             <Route path="clinician" element={<ClinicianDashboard />} />
+
+            <Route path="clinician/medications" element={<ClinicianMedUpdate />} />
+            <Route path="clinician/medications-review" element={<ClinicianMedReview />} />
+
+
             <Route path="caretaker" element={<CaretakerDashboard />} />
             <Route path="admin" element={<AdminDashboard />} />
             <Route
@@ -184,6 +191,9 @@ function Layout() {
     "/dashboard/meals",
     "/dashboard/inbox",
     "/dashboard/account-settings",
+     "/dashboard/clinician/medications",
+     "/dashboard/clinician/medications-review"
+     
   ]);
 
   return (

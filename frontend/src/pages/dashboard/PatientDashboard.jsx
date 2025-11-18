@@ -574,7 +574,10 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               </span>
             </div>
             <p className="tw-mt-2 tw-mb-3">Stay on track with your schedule.</p>
-            <button className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow">
+            <button 
+              className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+              onClick={() => navigate("/dashboard/medications")}
+              >
               View Schedule
             </button>
           </div>
