@@ -267,6 +267,41 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
       setAiSuggestions(patientInfo.aiSuggestions);
     }
   }, [patientInfo]);
+  // Fetch AI suggestions from backend so they persist across refresh
+  useEffect(() => {
+    if (!resolvedPatientId || !base_URL) return;
+
+    let abort = false;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `${base_URL}/patients/ai-suggestions/${resolvedPatientId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+
+        if (!abort) {
+          const suggestions = Array.isArray(data)
+            ? data
+            : data.aiSuggestions || [];
+          setAiSuggestions(suggestions);
+        }
+      } catch (err) {
+        if (!abort) {
+          console.error("Failed to load AI suggestions:", err);
+        }
+      }
+    })();
+
+    return () => {
+      abort = true;
+    };
+  }, [resolvedPatientId, base_URL]);
 
   /* Helper: notify clinician in real-time about a new pending goal */
   const notifyClinicianPendingGoal = async (goal) => {
@@ -404,7 +439,6 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
       setMessage("Could not delete goal.");
     }
   };
-
   const addSuggestionAsDraft = async (s) => {
     if (!resolvedPatientId) return;
 
@@ -438,6 +472,23 @@ const GoalsPage = ({ patientInfo, setPatientInfo }) => {
 
       const draft = await response.json();
       setGoals((gs) => [draft, ...gs]);
+
+      // REMOVE THIS SUGGESTION FROM THE AI LIST
+      setAiSuggestions((prev) => prev.filter((item) => item.id !== s.id));
+
+      // keep patientInfo in sync if parent is tracking suggestions there
+      if (setPatientInfo) {
+        setPatientInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                aiSuggestions: (prev.aiSuggestions || []).filter(
+                  (item) => item.id !== s.id
+                ),
+              }
+            : prev
+        );
+      }
 
       if (draft?.status === "pending_approval") {
         notifyClinicianPendingGoal(draft);

@@ -1,9 +1,8 @@
-// --------------------------------------------------------
-// MEDICATION ROUTES (FINAL + CONSISTENT)
-// --------------------------------------------------------
-
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
+dotenv.config();
+import { PrismaClient, GoalStatus } from "@prisma/client";
+import { generateAndStoreGoalSuggestions } from "./goalAi.js";
 
 const patientRouter = express.Router();
 const prisma = new PrismaClient();
@@ -33,7 +32,22 @@ patientRouter.get("/:userId", async (req, res) => {
   }
 });
 
-//create goal for patient
+// GET AI suggestions for a patient so they persist across refresh
+patientRouter.get("/ai-suggestions/:patientId", async (req, res) => {
+  const { patientId } = req.params;
+
+  try {
+    const aiSuggestions = await prisma.aiSuggestion.findMany({
+      where: { patient_id: Number(patientId) },
+      orderBy: { created_at: "desc" },
+    });
+
+    res.json({ aiSuggestions });
+  } catch (err) {
+    console.error("Error fetching AI suggestions:", err);
+    res.status(500).json({ error: "Failed to load AI suggestions" });
+  }
+});
 
 //map goal status
 const mapGoalStatus = (status) => {
