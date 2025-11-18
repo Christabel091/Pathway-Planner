@@ -40,6 +40,13 @@ const Icons = {
       <path strokeWidth="2" d="M22 21a5 5 0 00-7-4" />
     </svg>
   ),
+   meds: (cls = "tw-w-5 tw-h-5") => (
+    <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <rect x="3" y="7" width="18" height="13" rx="2" strokeWidth="2" />
+      <path strokeWidth="2" d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+      <path strokeWidth="2" d="M12 11v6M9 14h6" />
+    </svg>
+  ),
   labs: (cls = "tw-w-5 tw-h-5") => (
     <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
       <path
@@ -63,8 +70,11 @@ const Icons = {
   ),
 };
 
+import { useNavigate } from "react-router-dom";
+
 export default function ClinicianDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const displayName = user?.username || "Clinician";
   const base_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -254,6 +264,7 @@ export default function ClinicianDashboard() {
     },
     { key: "Inbox", icon: Icons.inbox, path: "/dashboard/clinician/inbox" },
     { key: "Lab Results", icon: Icons.labs, path: "/dashboard/clinician/labs" },
+    { key: "Medications", icon: Icons.meds, path: "/dashboard/clinician/medications" },
     { key: "Settings", icon: Icons.settings, path: "/account-settings" },
     { key: "Log Out", icon: Icons.logout, path: "/logout" },
   ];
@@ -667,6 +678,34 @@ export default function ClinicianDashboard() {
               <p className="tw-text-sm tw-text-cocoa-700">No patients yet.</p>
             )}
           </div>
+
+          {/* Medications */}
+          <div className="tw-rounded-[20px] tw-bg-[#D4E8C7] tw-from-blush-100 tw-via-sand-100 tw-to-blush-200 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+            <div className="tw-flex tw-items-start tw-justify-between tw-w-full">
+              <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+                Medications
+              </h3>
+              <span className="tw-text-xs tw-bg-white/70 tw-backdrop-blur tw-text-clay-700 tw-px-2.5 tw-py-1 tw-rounded-full">
+                Next:
+              </span>
+            </div>
+            <p className="tw-mt-2 tw-mb-3"> Assign medicine to your patients </p>
+            <button 
+              className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+              onClick={() => navigate("/dashboard/clinician/medications")}
+              >
+              Assign Medicine
+            </button>
+             <button 
+            className="tw-self-start tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
+            onClick={() => navigate("/dashboard/clinician/medications-review")}
+          >
+            Review Medicine
+          </button>
+
+          </div>
+
+
 
           {/* Lab Results CTA */}
           <div className="tw-rounded-[20px] tw-bg-[#D4E8C7] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
