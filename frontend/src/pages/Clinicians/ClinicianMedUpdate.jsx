@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
+import Modal from "../../components/Modal";
+import { Link } from "react-router-dom";
 
 export default function ClinicianMedUpdate() {
   const base_URL = import.meta.env.VITE_BACKEND_URL;
   const { user } = useAuth();
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
 
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +78,8 @@ export default function ClinicianMedUpdate() {
 
       if (!r.ok) throw new Error("Failed to assign medication");
 
-      alert("Medication assigned successfully ✔️");
+      setMessageType("success");
+      setMessage("Medication assigned successfully");
 
       // Reset form
       setForm({
@@ -87,13 +92,19 @@ export default function ClinicianMedUpdate() {
       });
     } catch (err) {
       console.error(err);
-      alert("Error assigning medication");
+      setMessageType("error");
+      setMessage("error assigning medication, try again later");
     }
   };
 
   // ------------------------------ UI ------------------------------
   return (
     <div className="tw-min-h-screen tw-p-6 tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#D4E8C7]">
+      <header className="tw-flex tw-items-center tw-justify-between tw-mb-6">
+        <Link to="/dashboard/clinician" className="tw-text-sm tw-underline">
+          Back
+        </Link>
+      </header>
       <div className="tw-max-w-xl tw-mx-auto tw-bg-[#FFF4E7] tw-rounded-2xl tw-shadow-soft tw-p-6">
         <h1 className="tw-text-2xl tw-font-semibold tw-text-clay-700 tw-mb-4">
           Assign Medication
@@ -219,6 +230,14 @@ export default function ClinicianMedUpdate() {
           </button>
         </form>
       </div>
+      {message && (
+        <Modal
+          message={message}
+          type={messageType}
+          duration={messageType === "success" ? 4000 : 7000}
+          onClose={() => setMessage("")}
+        />
+      )}
     </div>
   );
 }
