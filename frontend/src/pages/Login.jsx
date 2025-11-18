@@ -2,9 +2,8 @@
 
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import "../styles/legacy/login.css";
+import "../styles/legacy/Login.css";
 import { useAuth } from "../components/AuthContext";
-import { Link } from "react-router-dom";
 const Login = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
