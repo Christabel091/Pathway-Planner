@@ -196,7 +196,6 @@ function Layout() {
   // Hide navbar on the splash pages if you want (optional)
   const hideNavOn = new Set([
     "/",
-    "/Welcome",
     "/Login",
     "/SignUp",
     "/dashboard", //hidden when dashboard is open as well
