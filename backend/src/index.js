@@ -13,6 +13,7 @@ import infoRouter from "./routes/info.js";
 import patientRouter from "./routes/patients.js";
 import regenerateCodeRouter from "./routes/regenerateCode.js";
 import createAdminRouter from "./routes/admin.js";
+import caretakerRoutes from "./routes/caretakers.js";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -33,7 +34,7 @@ app.use("/patients", patientRouter);
 app.use("/regenerate", regenerateCodeRouter);
 app.use("/clinicians", cliniciansRouter);
 app.use("/notifications", notificationsRouter);
-
+app.use("/caretakers", caretakerRoutes);
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
