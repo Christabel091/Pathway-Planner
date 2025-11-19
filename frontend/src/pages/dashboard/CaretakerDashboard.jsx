@@ -34,22 +34,22 @@ export default function CaretakerDashboard() {
 
         // TODO: Replace with your real endpoint to get caretaker's linked patients
         // Example: GET /caretakers/:userId/patients (returns array of basic patient profiles)
-        const res = await fetch(`${base_URL}/caretakers/${user.id}/patients`, {
+        const res = await fetch(`${base_URL}/caretakers/me/patients`, {
           credentials: "include",
           signal: ctrl.signal,
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const patients = await res.json();
-        setLinkedPatients(Array.isArray(patients) ? patients : []);
-
+        
+        const data = await res.json();
+        const patients = data.patients || [];
+        
+        setLinkedPatients(patients);
+        
         // Auto-select first patient
-        const firstId = patients?.[0]?.id ?? null;
+        const firstId = patients[0]?.id ?? null;
         setActivePatientId(firstId);
-
+        
         if (firstId) {
-          // Fetch the full (readonly) patient snapshot
-          // Reuse your patients/:userId route if it returns full record by userId,
-          // or add a dedicated caretakers view route that enforces read-only access.
           const pRes = await fetch(
             `${base_URL}/caretakers/patient/${firstId}`,
             {
@@ -60,8 +60,7 @@ export default function CaretakerDashboard() {
           if (!pRes.ok) throw new Error(`HTTP ${pRes.status}`);
           const p = await pRes.json();
           setActivePatient(p);
-        }
-      } catch (e) {
+        }   } catch (e) {
         if (e.name !== "AbortError") setErr(String(e));
       } finally {
         setLoading(false);

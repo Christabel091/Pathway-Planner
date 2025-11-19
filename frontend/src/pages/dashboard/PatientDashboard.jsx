@@ -95,6 +95,9 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
   const [patientsClinician, setPatientsClinician] = useState(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
   const [patientError, setPatientError] = useState(null);
+  const [caretakerCode, setCaretakerCode] = useState("");
+  const [caretakerCodeError, setCaretakerCodeError] = useState("");
+  const [caretakerCodeLoading, setCaretakerCodeLoading] = useState(false);
 
   useEffect(() => {
     if (!user?.id || !base_URL) return; // guard until we have what we need
@@ -151,6 +154,29 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           notificationId,
         })
       );
+    }
+  };
+
+  const handleGenerateCaretakerCode = async () => {
+    if (!base_URL) return;
+    try {
+      setCaretakerCodeError("");
+      setCaretakerCodeLoading(true);
+      const res = await fetch(
+        `${base_URL}/patients/${user.id}/generate-caretaker-code`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setCaretakerCode(data.code || "");
+    } catch (err) {
+      console.error("Error generating caretaker code:", err);
+      setCaretakerCodeError("Unable to generate code. Please try again.");
+    } finally {
+      setCaretakerCodeLoading(false);
     }
   };
 
@@ -407,7 +433,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         </div>
 
         {/* Header row: Welcome + Clinician */}
-        <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6 tw-mb-8">
+        <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-4 tw-gap-6 tw-mb-8">
           {/* Welcome */}
           <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
             <div>
@@ -450,6 +476,32 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
                   Add Clinician
                 </button>
               </div>
+            )}
+          </section>
+          {/* Caretaker Invite Code */}
+          <section className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+              Caretaker Invite Code
+            </h3>
+            <p className="tw-text-sm tw-text-cocoa-700 tw-mb-3">
+              Share this code with your caretaker so they can view your goals and lab results.
+            </p>
+            <div className="tw-flex tw-items-center tw-gap-2">
+              <code className="tw-text-base tw-font-semibold tw-bg-white/80 tw-border tw-border-white/70 tw-rounded-xl tw-px-3 tw-py-1">
+                {caretakerCode || "— — — — — —"}
+              </code>
+              <button
+                className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-text-sm tw-px-3 tw-py-2 tw-rounded-xl tw-shadow disabled:tw-opacity-60 disabled:tw-cursor-not-allowed"
+                onClick={handleGenerateCaretakerCode}
+                disabled={caretakerCodeLoading}
+              >
+                {caretakerCode ? "Regenerate" : "Generate"}
+              </button>
+            </div>
+            {caretakerCodeError && (
+              <p className="tw-text-xs tw-text-red-600 tw-mt-2">
+                {caretakerCodeError}
+              </p>
             )}
           </section>
         </div>

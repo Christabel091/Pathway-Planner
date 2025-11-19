@@ -89,7 +89,7 @@ router.get("/patients/:patientId", async (req, res) => {
         .json({ error: "You are not linked to this patient" });
     }
 
-    // fetch full patient snapshot like your clinician logic does
+    // fetch full patient snapshot like clinician logic does
     const patient = await prisma.patient.findUnique({
       where: { id: patientId },
       select: {
