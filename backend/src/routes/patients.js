@@ -3,11 +3,77 @@ import dotenv from "dotenv";
 dotenv.config();
 import { PrismaClient, GoalStatus } from "@prisma/client";
 import { generateAndStoreGoalSuggestions } from "./goalAi.js";
-
+import generateInviteCode from "../../utils/generateCode.js";
+import { ensurePatientInviteCode } from "../../utils/generateCode.js";
 const patientRouter = express.Router();
 const prisma = new PrismaClient();
 
 //route to get patient by user id
+
+patientRouter.get("/invite/:id", async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { user_id: id },
+      select: {
+        id: true,
+        inviteCode: true,
+        inviteUpdatedAt: true,
+      },
+    });
+
+    if (!patient) {
+      return res.status(404).json({ error: "Patient record not found" });
+    }
+
+    const code =
+      patient.inviteCode ||
+      (await ensurePatientInviteCode(prisma, patient.id, {
+        forceRegenerate: false,
+      }));
+
+    return res.json({
+      inviteCode: code,
+      inviteUpdatedAt: patient.inviteUpdatedAt || new Date(),
+      patientId: patient.id,
+    });
+  } catch (err) {
+    console.error("GET /patients/me/invite error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+/**
+ * POST /patients/me/invite/regenerate
+ * Regenerates a fresh invite code for the patient.
+ */
+patientRouter.post("/invite/regenerate/:id", async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { user_id: id },
+      select: { id: true },
+    });
+
+    if (!patient) {
+      return res.status(404).json({ error: "Patient record not found" });
+    }
+
+    const newCode = await ensurePatientInviteCode(prisma, patient.id, {
+      forceRegenerate: true,
+    });
+
+    return res.json({
+      inviteCode: newCode,
+      inviteUpdatedAt: new Date(),
+      patientId: patient.id,
+    });
+  } catch (err) {
+    console.error("POST /patients/me/invite/regenerate error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 patientRouter.get("/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
@@ -119,7 +185,6 @@ patientRouter.delete("/goals/:goalId", async (req, res) => {
 });
 
 patientRouter.patch("/goals/:goalId", async (req, res) => {
-  console.log("changing goal status");
   const { goalId } = req.params;
   const { status, completed } = req.body;
 
@@ -220,7 +285,6 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
 
     // 4) AI suggestions triggers
     if (isClinicianApproval) {
-      console.log("calling goalai func 1");
       await generateAndStoreGoalSuggestions(
         prisma,
         existingGoal.patient_id,
@@ -230,7 +294,6 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
     }
 
     if (isClinicianDenial) {
-      console.log("calling goalai func 2");
       await generateAndStoreGoalSuggestions(
         prisma,
         existingGoal.patient_id,
@@ -443,7 +506,7 @@ patientRouter.get("/by-patient/:patientId/labs", async (req, res) => {
 });
 
 // POST /patients/me/generate-caretaker-code
-router.post("/me/generate-caretaker-code", requireAuth, async (req, res) => {
+patientRouter.post("/generate-caretaker-code", async (req, res) => {
   if (req.user.role !== "patient") {
     return res.status(403).json({ error: "Only patients can generate codes" });
   }
@@ -456,6 +519,87 @@ router.post("/me/generate-caretaker-code", requireAuth, async (req, res) => {
   });
 
   res.json({ code });
+});
+
+patientRouter.get("/account/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: "Invalid user id." });
+  }
+
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { user_id: id },
+      select: {
+        id: true,
+        user_id: true,
+        full_name: true,
+        dob: true,
+        gender: true,
+        allergies: true,
+        chronic_conditions: true,
+        current_medications: true,
+      },
+    });
+
+    if (!patient) {
+      return res.status(404).json({ error: "Patient record not found." });
+    }
+
+    return res.json(patient);
+  } catch (err) {
+    console.error("GET /patients/account/:id error:", err);
+    return res.status(500).json({ error: "Failed to load patient account." });
+  }
+});
+
+patientRouter.put("/account/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: "Invalid user id." });
+  }
+
+  try {
+    const { allergies, chronic_conditions, current_medications } = req.body;
+
+    const data = {};
+    if (typeof allergies !== "undefined") data.allergies = allergies;
+    if (typeof chronic_conditions !== "undefined")
+      data.chronic_conditions = chronic_conditions;
+    if (typeof current_medications !== "undefined")
+      data.current_medications = current_medications;
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({
+        error: "No editable fields provided.",
+      });
+    }
+
+    const updated = await prisma.patient.update({
+      where: { user_id: id },
+      data,
+      select: {
+        id: true,
+        user_id: true,
+        full_name: true,
+        dob: true,
+        gender: true,
+        allergies: true,
+        chronic_conditions: true,
+        current_medications: true,
+      },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    console.error("PUT /patients/account/:id error:", err);
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Patient record not found." });
+    }
+    return res.status(500).json({ error: "Failed to update patient account." });
+  }
 });
 
 export default patientRouter;

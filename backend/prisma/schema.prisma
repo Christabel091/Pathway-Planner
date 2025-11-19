@@ -36,6 +36,8 @@ model Patient {
   relative_contact_name  String?            @db.VarChar(150)
   relative_contact_email String?            @db.VarChar(150)
   relative_contact_phone String?            @db.VarChar(20)
+   inviteCode             String?            @unique @db.VarChar(16)
+  inviteUpdatedAt        DateTime?          @default(now()) @db.DateTime(0)
   blood_type             BloodType?
   allergies              String?            @db.Text
   chronic_conditions     String?            @db.Text

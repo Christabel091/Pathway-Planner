@@ -1,17 +1,19 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState, useMemo, use } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../../components/AuthContext";
 import { PieChart, Pie, Cell } from "recharts";
 import "../../styles/tailwind/Dashboard.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AddClinicianModal from "../../components/AddClinicanModal";
 import { connectWebSocket } from "../../utility/webSocket";
+import { getToken } from "../../utility/auth";
 
 const PIE_COLORS = {
   completedGradientStart: "#76B28C", // soft emerald
   completedGradientEnd: "#A1D5BA", // mint highlight
   remaining: "#F7E8CF", // soft cream/peach
 };
+
 // Simple inline SVG icons (no extra deps)
 const Icons = {
   menu: (cls = "tw-w-6 tw-h-6") => (
@@ -86,7 +88,7 @@ const Icons = {
 };
 
 export default function PatientDashboard({ patientInfo, setPatientInfo }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [labAlerts, setLabAlerts] = useState([]);
   const base_URL = import.meta.env.VITE_BACKEND_URL;
   const displayName = user?.username || "Patient";
@@ -95,12 +97,15 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
   const [patientsClinician, setPatientsClinician] = useState(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
   const [patientError, setPatientError] = useState(null);
+
+  // Caretaker invite code state
   const [caretakerCode, setCaretakerCode] = useState("");
   const [caretakerCodeError, setCaretakerCodeError] = useState("");
   const [caretakerCodeLoading, setCaretakerCodeLoading] = useState(false);
+  const [caretakerCodeUpdatedAt, setCaretakerCodeUpdatedAt] = useState(null);
 
   useEffect(() => {
-    if (!user?.id || !base_URL) return; // guard until we have what we need
+    if (!user?.id || !base_URL) return;
 
     const ctrl = new AbortController();
 
@@ -119,6 +124,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         const data = await res.json();
         setPatientInfo(data);
         console.log("patient info", data);
+
         if (data.clinician_id && data.clinician_id !== 1) {
           const response = await fetch(
             `${base_URL}/onboarding/clinicians/${data.clinician_id}`,
@@ -142,6 +148,90 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     return () => ctrl.abort();
   }, [user, base_URL, setPatientsClinician, setPatientInfo]);
 
+  // Load existing invite code on mount
+  useEffect(() => {
+    if (!user?.id || !base_URL) return;
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+
+    const ctrl = new AbortController();
+
+    (async () => {
+      try {
+        setCaretakerCodeError("");
+        setCaretakerCodeLoading(true);
+
+        const res = await fetch(`${base_URL}/patients/invite/${user.id}`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Authorization: `Bearer ${token}` },
+          signal: ctrl.signal,
+        });
+
+        if (!res.ok) {
+          // If 403 or 404, just keep UI quiet instead of exploding
+          if (res.status === 403 || res.status === 404) return;
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        setCaretakerCode(data.inviteCode || "");
+        if (data.inviteUpdatedAt) {
+          setCaretakerCodeUpdatedAt(new Date(data.inviteUpdatedAt));
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Error loading invite code:", err);
+          setCaretakerCodeError("Unable to load invite code.");
+        }
+      } finally {
+        setCaretakerCodeLoading(false);
+      }
+    })();
+
+    return () => ctrl.abort();
+  }, [user?.id, base_URL]);
+
+  // Regenerate invite code
+  const handleRegenerateInviteCode = async () => {
+    console.log("in here 1");
+    if (!base_URL) return;
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+    try {
+      setCaretakerCodeError("");
+      setCaretakerCodeLoading(true);
+      console.log("in here 2");
+      const res = await fetch(
+        `${base_URL}/patients/invite/regenerate/${user.id}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      setCaretakerCode(data.inviteCode || "");
+      if (data.inviteUpdatedAt) {
+        setCaretakerCodeUpdatedAt(new Date(data.inviteUpdatedAt));
+      } else {
+        setCaretakerCodeUpdatedAt(new Date());
+      }
+    } catch (err) {
+      console.error("Error regenerating invite code:", err);
+      setCaretakerCodeError("Unable to update code. Please try again.");
+    } finally {
+      setCaretakerCodeLoading(false);
+    }
+  };
+
   // helper to ack notifications over WS
   const ackNotification = (notificationId) => {
     if (
@@ -154,29 +244,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           notificationId,
         })
       );
-    }
-  };
-
-  const handleGenerateCaretakerCode = async () => {
-    if (!base_URL) return;
-    try {
-      setCaretakerCodeError("");
-      setCaretakerCodeLoading(true);
-      const res = await fetch(
-        `${base_URL}/patients/${user.id}/generate-caretaker-code`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setCaretakerCode(data.code || "");
-    } catch (err) {
-      console.error("Error generating caretaker code:", err);
-      setCaretakerCodeError("Unable to generate code. Please try again.");
-    } finally {
-      setCaretakerCodeLoading(false);
     }
   };
 
@@ -202,8 +269,6 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           },
           ...prev,
         ]);
-        console.log("Sending ack for notificationId:", p);
-        console.log("Current lab alerts:", labAlerts);
         ackNotification(p.notificationId);
         return;
       }
@@ -252,7 +317,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
     return {
       totalGoals: total,
       completedGoals: done,
-      percentComplete: Math.min(100, Math.max(0, pct)), // clamp for safety
+      percentComplete: Math.min(100, Math.max(0, pct)), // clamp
     };
   }, [goals]);
 
@@ -269,8 +334,8 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
   );
 
   // Sidebar behavior
-  const [mobileOpen, setMobileOpen] = useState(false); // small screens
-  const [collapsed, setCollapsed] = useState(false); // desktop collapse
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const location = useLocation();
   const navItems = [
@@ -290,6 +355,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
 
   return (
     <div className="tw-flex tw-min-h-screen tw-text-cocoa-700">
+      {/* Mobile top bar */}
       <div className="tw-fixed tw-top-0 tw-left-0 tw-right-0 tw-z-30 tw-flex tw-items-center tw-justify-between tw-bg-white/80 tw-backdrop-blur tw-border-b tw-border-white/60 tw-px-4 tw-py-3 lg:tw-hidden">
         <button
           onClick={() => setMobileOpen(true)}
@@ -305,6 +371,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         <span className="tw-w-10" />
       </div>
 
+      {/* Desktop sidebar */}
       <aside
         className={[
           "tw-hidden lg:tw-flex tw-h-screen tw-fixed tw-left-0 tw-top-0 tw-z-20",
@@ -368,6 +435,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         </footer>
       </aside>
 
+      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="tw-fixed tw-inset-0 tw-z-40 lg:tw-hidden">
           <button
@@ -402,9 +470,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
                       ].join(" ")}
                     >
                       {item.icon("tw-w-5 tw-h-5")}
-                      <span className={collapsed ? "tw-sr-only" : ""}>
-                        {item.key}
-                      </span>
+                      <span>{item.key}</span>
                     </Link>
                   </li>
                 ))}
@@ -414,6 +480,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
         </div>
       )}
 
+      {/* Main content */}
       <main
         className={[
           "tw-flex-1 tw-min-h-screen tw-bg-fixed",
@@ -426,13 +493,13 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           backgroundAttachment: "fixed",
         }}
       >
-        {/* Decorative background blobs */}
+        {/* Decorative blobs */}
         <div className="tw-pointer-events-none tw-absolute tw-inset-0 tw--z-10">
           <div className="tw-absolute tw-top-24 tw-right-[-6rem] tw-w-[22rem] tw-h-[22rem] tw-rounded-full tw-bg-blush-200/30 tw-blur-3xl" />
           <div className="tw-absolute tw-bottom-16 tw-left-[-4rem] tw-w-[18rem] tw-h-[18rem] tw-rounded-full tw-bg-sand-100/40 tw-blur-3xl" />
         </div>
 
-        {/* Header row: Welcome + Clinician */}
+        {/* Header row: Welcome + Invite Code + Clinician */}
         <div className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-4 tw-gap-6 tw-mb-8">
           {/* Welcome */}
           <header className="tw-col-span-1 xl:tw-col-span-2 tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center">
@@ -446,7 +513,50 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             </div>
           </header>
 
-          {/* Clinician */}
+          {/* Caretaker Invite Code – same gradient family as welcome */}
+          <section className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-backdrop-blur-sm tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
+            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
+              Caretaker Invite Code
+            </h3>
+            <p className="tw-text-sm tw-text-cocoa-700 tw-mb-3">
+              Share this code with your caretaker so they can view your goals,
+              labs, and progress in view-only mode.
+            </p>
+            <div className="tw-flex tw-flex-wrap tw-items-center tw-gap-3">
+              <code className="tw-text-base tw-font-semibold tw-bg-white/80 tw-border tw-border-white/70 tw-rounded-xl tw-px-3 tw-py-1 tw-tracking-[0.2em] tw-text-clay-700">
+                {caretakerCode || "— — — — — —"}
+              </code>
+              <button
+                className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-text-sm tw-px-3 tw-py-2 tw-rounded-xl tw-shadow disabled:tw-opacity-60 disabled:tw-cursor-not-allowed"
+                onClick={handleRegenerateInviteCode}
+                disabled={caretakerCodeLoading}
+              >
+                {caretakerCodeLoading
+                  ? "Updating..."
+                  : caretakerCode
+                  ? "Regenerate"
+                  : "Generate"}
+              </button>
+            </div>
+            {caretakerCodeUpdatedAt && (
+              <p className="tw-text-[11px] tw-text-clay-700/80 tw-mt-2">
+                Last updated:{" "}
+                {caretakerCodeUpdatedAt.toLocaleString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
+            {caretakerCodeError && (
+              <p className="tw-text-xs tw-text-red-600 tw-mt-2">
+                {caretakerCodeError}
+              </p>
+            )}
+          </section>
+
+          {/* Clinician card (unchanged styling, just last in row) */}
           <section className="tw-rounded-[20px] tw-bg-[#FFF9EF] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Your Clinician
@@ -478,35 +588,9 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
               </div>
             )}
           </section>
-          {/* Caretaker Invite Code */}
-          <section className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-justify-center">
-            <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
-              Caretaker Invite Code
-            </h3>
-            <p className="tw-text-sm tw-text-cocoa-700 tw-mb-3">
-              Share this code with your caretaker so they can view your goals and lab results.
-            </p>
-            <div className="tw-flex tw-items-center tw-gap-2">
-              <code className="tw-text-base tw-font-semibold tw-bg-white/80 tw-border tw-border-white/70 tw-rounded-xl tw-px-3 tw-py-1">
-                {caretakerCode || "— — — — — —"}
-              </code>
-              <button
-                className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-text-sm tw-px-3 tw-py-2 tw-rounded-xl tw-shadow disabled:tw-opacity-60 disabled:tw-cursor-not-allowed"
-                onClick={handleGenerateCaretakerCode}
-                disabled={caretakerCodeLoading}
-              >
-                {caretakerCode ? "Regenerate" : "Generate"}
-              </button>
-            </div>
-            {caretakerCodeError && (
-              <p className="tw-text-xs tw-text-red-600 tw-mt-2">
-                {caretakerCodeError}
-              </p>
-            )}
-          </section>
         </div>
 
-        {/* Content */}
+        {/* Content grid */}
         <section className="tw-grid tw-grid-cols-1 xl:tw-grid-cols-3 tw-gap-6">
           {/* Goals progress */}
           <div className="tw-rounded-[24px] tw-bg-[#FFF4E7] tw-backdrop-blur-md tw-border tw-border-white/60 tw-shadow-soft tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-relative">
@@ -638,7 +722,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
             <h3 className="tw-text-lg tw-font-semibold tw-text-clay-700 tw-mb-2">
               Lab Results
             </h3>
-            <p className="tw-mb-3">View results sent by your clinican </p>
+            <p className="tw-mb-3">View results sent by your clinician.</p>
             <button
               className="tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
               onClick={() => navigate("/dashboard/lab-results")}
@@ -658,16 +742,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
                 {patientInfo.aiSuggestions.slice(0, 5).map((s) => (
                   <li
                     key={s.id}
-                    className="
-          tw-max-w-[260px]
-          tw-w-full
-          tw-rounded-2xl
-          tw-bg-white/40
-          tw-backdrop-blur-sm
-          tw-border tw-border-white/40
-          tw-shadow
-          tw-px-4 tw-py-3
-        "
+                    className="tw-max-w-[260px] tw-w-full tw-rounded-2xl tw-bg-white/40 tw-backdrop-blur-sm tw-border tw-border-white/40 tw-shadow tw-px-4 tw-py-3"
                   >
                     {(() => {
                       const [title, desc] = s.suggestion_text.split(/\r?\n/, 2);
@@ -718,6 +793,7 @@ export default function PatientDashboard({ patientInfo, setPatientInfo }) {
           </div>
         </section>
       </main>
+
       {isAddClinicanModal && (
         <AddClinicianModal
           patientId={patientInfo?.id}

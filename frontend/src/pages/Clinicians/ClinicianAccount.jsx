@@ -1,11 +1,10 @@
 /** @format */
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
-import { getToken } from "../../utility/auth";
 import { useNavigate } from "react-router-dom";
+import { getToken } from "../../utility/auth";
 
-const Account = () => {
+const ClinicianAccount = () => {
   const { user } = useAuth();
   const base_URL = import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
@@ -17,11 +16,12 @@ const Account = () => {
 
   const [form, setForm] = useState({
     full_name: "",
-    dob: "",
-    gender: "",
-    allergies: "",
-    chronic_conditions: "",
-    current_medications: "",
+    specialty: "",
+    license_number: "",
+    clinic_name: "",
+    contact_email: "",
+    contact_phone: "",
+    office_address: "",
   });
 
   const handleChange = (field) => (e) => {
@@ -31,7 +31,7 @@ const Account = () => {
     }));
   };
 
-  // Load patient account data
+  // Load clinician account data
   useEffect(() => {
     if (!user?.id || !base_URL) return;
     const token = getToken();
@@ -45,7 +45,7 @@ const Account = () => {
         setError("");
         setSuccess("");
 
-        const res = await fetch(`${base_URL}/patients/account/${user.id}`, {
+        const res = await fetch(`${base_URL}/clinicians/account/${user.id}`, {
           method: "GET",
           credentials: "include",
           headers: { Authorization: `Bearer ${token}` },
@@ -54,7 +54,7 @@ const Account = () => {
 
         if (!res.ok) {
           if (res.status === 404) {
-            throw new Error("Patient record not found for this account.");
+            throw new Error("Clinician record not found for this account.");
           }
           throw new Error(`Unable to load account (HTTP ${res.status})`);
         }
@@ -63,11 +63,12 @@ const Account = () => {
 
         setForm({
           full_name: data.full_name || "",
-          dob: data.dob || "",
-          gender: data.gender || "",
-          allergies: data.allergies || "",
-          chronic_conditions: data.chronic_conditions || "",
-          current_medications: data.current_medications || "",
+          specialty: data.specialty || "",
+          license_number: data.license_number || "",
+          clinic_name: data.clinic_name || "",
+          contact_email: data.contact_email || "",
+          contact_phone: data.contact_phone || "",
+          office_address: data.office_address || "",
         });
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -90,16 +91,19 @@ const Account = () => {
 
     setError("");
     setSuccess("");
+
     try {
       setSaving(true);
 
       const body = {
-        allergies: form.allergies || "",
-        chronic_conditions: form.chronic_conditions || "",
-        current_medications: form.current_medications || "",
+        specialty: form.specialty || "",
+        clinic_name: form.clinic_name || "",
+        contact_email: form.contact_email || "",
+        contact_phone: form.contact_phone || "",
+        office_address: form.office_address || "",
       };
 
-      const res = await fetch(`${base_URL}/patients/account/${user.id}`, {
+      const res = await fetch(`${base_URL}/clinicians/account/${user.id}`, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -126,19 +130,17 @@ const Account = () => {
     }
   };
 
-  const displayName = user?.username || "Patient";
+  const displayName = user?.username || "Clinician";
   const displayEmail = user?.email || "";
 
   return (
     <div className="tw-min-h-screen tw-flex tw-justify-center tw-bg-[linear-gradient(180deg,#faf7f3,#f6ede7,#ecc4b1)] tw-px-4 tw-py-8">
       <div className="tw-w-full tw-max-w-3xl">
-        {/* ← BACK HEADER */}
+        {/* Back header */}
         <button
-          onClick={() => navigate("/dashboard/patient")}
-          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-700 tw-text-sm tw-font-medium tw-mb-4
-                   hover:tw-text-clay-900 tw-transition"
+          onClick={() => navigate("/dashboard/clinician")}
+          className="tw-flex tw-items-center tw-gap-2 tw-text-clay-700 tw-text-sm tw-font-medium tw-mb-4 hover:tw-text-clay-900 tw-transition"
         >
-          {/* Arrow */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -155,12 +157,14 @@ const Account = () => {
           </svg>
           Back to Dashboard
         </button>
+
+        {/* Header card */}
         <div className="tw-rounded-[20px] tw-bg-gradient-to-br tw-from-[#F7D2C9] tw-to-[#F9E2DA] tw-shadow-soft tw-border tw-border-white/70 tw-p-6 tw-mb-6">
           <h1 className="tw-text-2xl tw-font-semibold tw-text-clay-700">
             Account Settings
           </h1>
           <p className="tw-text-xs tw-text-clay-700/80 tw-mt-1">
-            View your profile details and update non-static medical information.
+            Review your profile and update your contact and practice details.
           </p>
           <div className="tw-mt-4 tw-flex tw-flex-col sm:tw-flex-row tw-gap-4 tw-text-sm">
             <div className="tw-flex-1">
@@ -180,16 +184,16 @@ const Account = () => {
           </div>
         </div>
 
-        {/* Main form card: peach zone */}
+        {/* Main form card */}
         <form
           onSubmit={handleSubmit}
           className="tw-rounded-[20px] tw-bg-[#FFF4E7] tw-shadow-soft tw-border tw-border-white/70 tw-p-6 tw-space-y-5"
         >
           <h2 className="tw-text-lg tw-font-semibold tw-text-clay-700">
-            Profile Details
+            Professional Profile
           </h2>
 
-          {/* Read-only info (static) */}
+          {/* Mostly static core info */}
           <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
             <div>
               <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
@@ -202,78 +206,93 @@ const Account = () => {
                 className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/60 tw-px-3 tw-py-2 tw-text-sm tw-text-clay-700 tw-opacity-80 tw-cursor-not-allowed"
               />
               <p className="tw-text-[11px] tw-text-clay-700/60 tw-mt-1">
-                Contact your clinician if your legal name needs to be updated.
+                Contact the system administrator if your name needs to be
+                updated.
               </p>
             </div>
 
             <div>
               <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
-                Date of Birth
+                License Number
               </label>
               <input
-                type="date"
-                value={form.dob ? form.dob.substring(0, 10) : ""}
+                type="text"
+                value={form.license_number}
                 disabled
                 className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/60 tw-px-3 tw-py-2 tw-text-sm tw-text-clay-700 tw-opacity-80 tw-cursor-not-allowed"
               />
               <p className="tw-text-[11px] tw-text-clay-700/60 tw-mt-1">
-                Date of birth is managed by your clinician.
+                License details are verified and cannot be edited here.
               </p>
             </div>
 
             <div>
               <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
-                Gender
+                Specialty
               </label>
               <input
                 type="text"
-                value={form.gender}
-                disabled
-                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/60 tw-px-3 tw-py-2 tw-text-sm tw-text-clay-700 tw-opacity-80 tw-cursor-not-allowed"
+                value={form.specialty}
+                onChange={handleChange("specialty")}
+                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm"
+                placeholder="e.g., Endocrinology, Family Medicine"
               />
             </div>
           </div>
 
           <hr className="tw-border-sand-200/70" />
 
-          {/* Editable medical info */}
+          {/* Editable practice/contact info */}
           <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
-            <div className="tw-col-span-1 md:tw-col-span-2">
+            <div>
               <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
-                Allergies
+                Clinic / Practice Name
               </label>
-              <textarea
-                value={form.allergies}
-                onChange={handleChange("allergies")}
-                rows={3}
-                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm tw-resize-none"
-                placeholder="List any medication, food, or environmental allergies."
+              <input
+                type="text"
+                value={form.clinic_name}
+                onChange={handleChange("clinic_name")}
+                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm"
+                placeholder="Clinic name"
+              />
+            </div>
+
+            <div>
+              <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
+                Contact Email
+              </label>
+              <input
+                type="email"
+                value={form.contact_email}
+                onChange={handleChange("contact_email")}
+                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm"
+                placeholder="Clinic contact email"
+              />
+            </div>
+
+            <div>
+              <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                value={form.contact_phone}
+                onChange={handleChange("contact_phone")}
+                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm"
+                placeholder="Clinic phone number"
               />
             </div>
 
             <div className="tw-col-span-1 md:tw-col-span-2">
               <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
-                Chronic Conditions
+                Office Address
               </label>
               <textarea
-                value={form.chronic_conditions}
-                onChange={handleChange("chronic_conditions")}
+                value={form.office_address}
+                onChange={handleChange("office_address")}
                 rows={3}
                 className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm tw-resize-none"
-                placeholder="Examples: Type 2 diabetes, asthma, hypertension..."
-              />
-            </div>
-
-            <div className="tw-col-span-1 md:tw-col-span-2">
-              <label className="tw-block tw-text-xs tw-font-medium tw-text-clay-700 tw-mb-1">
-                Current Medications
-              </label>
-              <textarea
-                value={form.current_medications}
-                onChange={handleChange("current_medications")}
-                rows={3}
-                className="tw-w-full tw-rounded-xl tw-border tw-border-white/70 tw-bg-white/90 tw-px-3 tw-py-2 tw-text-sm tw-resize-none"
-                placeholder="Include medication name, dose, and how often you take it."
+                placeholder="Street, city, state, ZIP"
               />
             </div>
           </div>
@@ -306,4 +325,4 @@ const Account = () => {
   );
 };
 
-export default Account;
+export default ClinicianAccount;

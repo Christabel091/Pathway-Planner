@@ -9,3 +9,31 @@ const generateInviteCode = (length = 8) => {
 };
 
 export default generateInviteCode;
+
+export async function ensurePatientInviteCode(prisma, patientId, opts = {}) {
+  const { forceRegenerate = false } = opts;
+
+  const patient = await prisma.patient.findUnique({
+    where: { id: patientId },
+    select: { inviteCode: true },
+  });
+
+  if (!patient) {
+    throw new Error("Patient not found");
+  }
+
+  if (patient.inviteCode && !forceRegenerate) {
+    // Already has a code, no change
+    return patient.inviteCode;
+  }
+
+  const newCode = generateInviteCode();
+  await prisma.patient.update({
+    where: { id: patientId },
+    data: {
+      inviteCode: newCode,
+      inviteUpdatedAt: new Date(),
+    },
+  });
+  return newCode;
+}
