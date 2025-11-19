@@ -303,7 +303,6 @@ patientRouter.patch("/goals/:goalId", async (req, res) => {
     }
 
     if (shouldTriggerAiOnCompletion) {
-      console.log("calling goalai func 3");
       const reason = isEarlyCompletion
         ? "goal_completed_early"
         : "goal_completed_late";
@@ -358,8 +357,6 @@ patientRouter.get("/:userId/labs", async (req, res) => {
 // 1) PATIENT: Get medications by USER ID (matches labs)
 patientRouter.get("/:userId/medications", async (req, res) => {
   try {
-    console.log("PARAM USER ID:", req.params.userId); // ← ADD THIS LINE
-
     const userId = Number(req.params.userId);
 
     const patient = await prisma.patient.findUnique({
