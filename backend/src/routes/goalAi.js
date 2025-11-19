@@ -72,7 +72,7 @@ export async function generateAndStoreGoalSuggestions(
 ) {
   const suggestionText = await getGoalSuggestionsForPatient(prisma, patientId);
   if (!suggestionText) return;
-  console.log("creating ai suggestion for patient", patientId);
+
   await prisma.aiSuggestion.create({
     data: {
       patient_id: patientId,
