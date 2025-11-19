@@ -14,6 +14,7 @@ import RoleBasedDashboard from "./pages/RoleBasedDashboard";
 import PatientDashboard from "./pages/dashboard/PatientDashboard";
 import ClinicianDashboard from "./pages/dashboard/ClinicianDashboard";
 import CaretakerDashboard from "./pages/dashboard/CaretakerDashboard";
+import CaretakerPatientGoalsPage from "./pages/Caretaker/CaretakerPatientGoals";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import LabsPage from "./pages/Patients/LabsPage";
 import MedicationsPage from "./pages/Patients/MedicationsPage";
@@ -156,6 +157,10 @@ function AppRoutes() {
             />
 
             <Route path="caretaker" element={<CaretakerDashboard />} />
+            <Route
+              path="caretaker/patients/:patientId"
+              element={<CaretakerPatientGoalsPage />}
+            />
             <Route path="admin" element={<AdminDashboard />} />
             <Route
               path="goals"
