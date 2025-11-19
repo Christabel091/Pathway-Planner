@@ -26,11 +26,10 @@ import DailyLogsPage from "./pages/Patients/DailyLogsPage";
 import InboxPage from "./pages/Patients/InboxPage";
 import GoalsPage from "./pages/Patients/GoalsPage";
 import Logout from "./pages/Logout";
-
+import ClinicianAccount from "./pages/Clinicians/ClinicianAccount";
 import { useState } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/AuthContext";
-// ——— Guards ———
 function RequireAuth() {
   const { isAuthed, loading } = useAuth();
   if (loading) return null; // TODO: replace with spinner
@@ -156,6 +155,11 @@ function AppRoutes() {
               element={<ClinicanLabReview />}
             />
 
+            <Route
+              path="/dashboard/clinician/account"
+              element={<ClinicianAccount />}
+            />
+
             <Route path="caretaker" element={<CaretakerDashboard />} />
             <Route
               path="caretaker/patients/:patientId"
@@ -210,6 +214,7 @@ function Layout() {
     "/dashboard/clinician/medications",
     "/dashboard/clinician/medications-review",
     "/dashboard/clinician/labs-review",
+    "/dashboard/clinician/account",
   ]);
 
   return (

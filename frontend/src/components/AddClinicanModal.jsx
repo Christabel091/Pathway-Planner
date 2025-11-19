@@ -87,7 +87,6 @@ const AddClinicianModal = ({
         }
       );
       const clinicianData = await clinicianRes.json();
-      console.log("Clinician data:", clinicianData.profile);
       if (clinicianRes.ok) setPatientsClinician(clinicianData.profile);
 
       // Close the modal shortly after success, or immediately:

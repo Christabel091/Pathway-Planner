@@ -663,7 +663,7 @@ export default function ClinicianDashboard() {
               <div className="tw-flex tw-flex-wrap tw-gap-3">
                 <button
                   className="tw-flex tw-items-center tw-gap-2 tw-bg-clay-400 hover:tw-bg-clay-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-xl tw-shadow"
-                  onClick={() => navigate("/account-settings")}
+                  onClick={() => navigate("/dashboard/clinician/account")}
                 >
                   {Icons.settings("tw-w-4 tw-h-4")}
                   <span>Account Settings</span>

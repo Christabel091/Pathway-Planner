@@ -6,27 +6,28 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 /**
- * GET /caretakers/me/patients
+ * GET /caretakers/me/patients?userId=123
  * Returns all patients linked to this caretaker via patient_caretakers.
  */
 router.get("/me/patients", async (req, res) => {
   try {
-    // only caretakers are allowed
-    if (req.user.role !== "caretaker") {
-      return res.status(403).json({ error: "Not a caretaker" });
+    const userId = Number(req.query.userId);
+    if (!userId || Number.isNaN(userId)) {
+      return res
+        .status(400)
+        .json({ error: "Missing or invalid userId in query" });
     }
 
-    // find caretaker row using user_id
     const caretaker = await prisma.caretaker.findUnique({
-      where: { user_id: req.user.id },
-      select: { id: true }
+      where: { user_id: userId },
+      select: { id: true },
     });
 
     if (!caretaker) {
+      // No caretaker row yet, just return empty list
       return res.json({ patients: [] });
     }
 
-    // fetch join-table links, include patient details
     const links = await prisma.patientCaretaker.findMany({
       where: { caretaker_id: caretaker.id },
       include: {
@@ -43,7 +44,6 @@ router.get("/me/patients", async (req, res) => {
     });
 
     const patients = links.map((l) => l.patient);
-
     return res.json({ patients });
   } catch (err) {
     console.error("GET /caretakers/me/patients error:", err);
@@ -52,22 +52,101 @@ router.get("/me/patients", async (req, res) => {
 });
 
 /**
- * GET /caretakers/patients/:patientId
- * Full snapshot of a patient IF the caretaker is linked to them.
+ * POST /caretakers/link-patient
+ * Body: { inviteCode: string, caretakerUserId: number }
+ */
+router.post("/link-patient", async (req, res) => {
+  try {
+    const { inviteCode, caretakerUserId } = req.body;
+
+    if (!inviteCode || typeof inviteCode !== "string") {
+      return res.status(400).json({ error: "Invite code is required" });
+    }
+
+    const userIdNum = Number(caretakerUserId);
+    if (!userIdNum || Number.isNaN(userIdNum)) {
+      return res
+        .status(400)
+        .json({ error: "Missing or invalid caretakerUserId" });
+    }
+
+    const caretaker = await prisma.caretaker.findUnique({
+      where: { user_id: userIdNum },
+      select: { id: true },
+    });
+
+    if (!caretaker) {
+      return res
+        .status(403)
+        .json({ error: "Caretaker record not found for this user" });
+    }
+
+    // Look up patient by inviteCode (must be unique in schema)
+    const patient = await prisma.patient.findUnique({
+      where: { inviteCode },
+      select: {
+        id: true,
+        full_name: true,
+        gender: true,
+        dob: true,
+      },
+    });
+
+    if (!patient) {
+      return res.status(404).json({ error: "Invalid or expired invite code" });
+    }
+
+    const existingLink = await prisma.patientCaretaker.findFirst({
+      where: {
+        caretaker_id: caretaker.id,
+        patient_id: patient.id,
+      },
+    });
+
+    if (existingLink) {
+      return res
+        .status(409)
+        .json({ error: "You are already linked to this patient" });
+    }
+
+    await prisma.patientCaretaker.create({
+      data: {
+        caretaker_id: caretaker.id,
+        patient_id: patient.id,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: "Patient linked successfully",
+      patient,
+    });
+  } catch (err) {
+    console.error("POST /caretakers/link-patient error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+/**
+ * GET /caretakers/patients/:patientId?userId=123
+ * View-only snapshot of a patient linked to this caretaker.
  */
 router.get("/patients/:patientId", async (req, res) => {
   try {
-    if (req.user.role !== "caretaker") {
-      return res.status(403).json({ error: "Not a caretaker" });
+    const patientId = Number(req.params.patientId);
+    if (!patientId || Number.isNaN(patientId)) {
+      return res.status(400).json({ error: "Invalid patientId" });
     }
 
-    const patientId = Number(req.params.patientId);
-    if (!patientId)
-      return res.status(400).json({ error: "Invalid patientId" });
+    const caretakerUserId = Number(req.query.userId);
+    if (!caretakerUserId || Number.isNaN(caretakerUserId)) {
+      return res
+        .status(400)
+        .json({ error: "Missing or invalid userId in query" });
+    }
 
-    // find caretaker row first
     const caretaker = await prisma.caretaker.findUnique({
-      where: { user_id: req.user.id },
+      where: { user_id: caretakerUserId },
       select: { id: true },
     });
 
@@ -75,7 +154,6 @@ router.get("/patients/:patientId", async (req, res) => {
       return res.status(403).json({ error: "Caretaker record not found" });
     }
 
-    // ensure caretaker is actually linked to this patient
     const link = await prisma.patientCaretaker.findFirst({
       where: {
         caretaker_id: caretaker.id,
@@ -89,7 +167,6 @@ router.get("/patients/:patientId", async (req, res) => {
         .json({ error: "You are not linked to this patient" });
     }
 
-    // fetch full patient snapshot like clinician logic does
     const patient = await prisma.patient.findUnique({
       where: { id: patientId },
       select: {

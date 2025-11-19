@@ -35,10 +35,102 @@ router.get("/by-user/:userId", async (req, res) => {
   return res.json({ clinician });
 });
 
-/**
- * GET /clinicians/:clinicianId
- * Return clinician profile by clinician id.
- */
+// GET /clinicians/account/:id
+// id = user_id from users table
+router.get("/account/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: "Invalid user id." });
+  }
+
+  try {
+    const clinician = await prisma.clinician.findUnique({
+      where: { user_id: id },
+      select: {
+        id: true,
+        user_id: true,
+        full_name: true,
+        specialty: true,
+        license_number: true,
+        clinic_name: true,
+        contact_email: true,
+        contact_phone: true,
+        office_address: true,
+      },
+    });
+
+    if (!clinician) {
+      return res.status(404).json({ error: "Clinician record not found." });
+    }
+
+    return res.json(clinician);
+  } catch (err) {
+    console.error("GET /clinicians/account/:id error:", err);
+    return res.status(500).json({ error: "Failed to load clinician account." });
+  }
+});
+
+router.put("/account/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: "Invalid user id." });
+  }
+
+  try {
+    const {
+      specialty,
+      clinic_name,
+      contact_email,
+      contact_phone,
+      office_address,
+    } = req.body;
+
+    const data = {};
+    if (typeof specialty !== "undefined") data.specialty = specialty;
+    if (typeof clinic_name !== "undefined") data.clinic_name = clinic_name;
+    if (typeof contact_email !== "undefined")
+      data.contact_email = contact_email;
+    if (typeof contact_phone !== "undefined")
+      data.contact_phone = contact_phone;
+    if (typeof office_address !== "undefined")
+      data.office_address = office_address;
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({
+        error: "No editable fields provided.",
+      });
+    }
+
+    const updated = await prisma.clinician.update({
+      where: { user_id: id },
+      data,
+      select: {
+        id: true,
+        user_id: true,
+        full_name: true,
+        specialty: true,
+        license_number: true,
+        clinic_name: true,
+        contact_email: true,
+        contact_phone: true,
+        office_address: true,
+      },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    console.error("PUT /clinicians/account/:id error:", err);
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Clinician record not found." });
+    }
+    return res
+      .status(500)
+      .json({ error: "Failed to update clinician account." });
+  }
+});
+
 router.get("/:clinicianId", async (req, res) => {
   const clinicianId = Number(req.params.clinicianId);
   if (!clinicianId)
