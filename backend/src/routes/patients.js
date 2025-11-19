@@ -428,4 +428,20 @@ patientRouter.get("/by-patient/:patientId/labs", async (req, res) => {
   }
 });
 
+// POST /patients/me/generate-caretaker-code
+router.post("/me/generate-caretaker-code", requireAuth, async (req, res) => {
+  if (req.user.role !== "patient") {
+    return res.status(403).json({ error: "Only patients can generate codes" });
+  }
+
+  const code = generateInviteCode(8);
+
+  const updated = await prisma.patient.update({
+    where: { user_id: req.user.id },
+    data: { caretakerInviteCode: code },
+  });
+
+  res.json({ code });
+});
+
 export default patientRouter;
