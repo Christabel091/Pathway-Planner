@@ -193,12 +193,11 @@ function AppRoutes() {
 
 function Layout() {
   const location = useLocation();
-  // Hide navbar on the splash pages if you want (optional)
   const hideNavOn = new Set([
     "/",
     "/Login",
     "/SignUp",
-    "/dashboard", //hidden when dashboard is open as well
+    "/dashboard",
     "/dashboard/caretaker",
     "/dashboard/patient",
     "/dashboard/clinician",
